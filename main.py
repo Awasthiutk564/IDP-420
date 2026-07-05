@@ -10,15 +10,39 @@ if sys.stdout.encoding != 'utf-8':
 if sys.stderr.encoding != 'utf-8':
     sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
-# Import processors
-from processors.pymupdf_processor import PyMuPDFProcessor
-from processors.pdfminer_processor import PDFMinerProcessor
-from processors.pdfplumber_processor import PDFPlumberProcessor
-from processors.pypdf_processor import PyPDFProcessor
+# Import adapters
+from adapters.pymupdf_extractor import PyMuPDFExtractor
+from adapters.pdfminer_extractor import PDFMinerExtractor
+from adapters.pdfplumber_extractor import PDFPlumberExtractor
+from adapters.pypdf_extractor import PyPDFExtractor
 
-# Import utils
-from utils.formatter import format_banner, print_result_report
-from utils.comparer import print_comparison_matrix, print_recommendation_report
+# Import classifiers
+from classifiers.document_classifier import DocumentClassifier
+from classifiers.page_classifier import PageClassifier
+
+# Import models
+from models.ocr_model import OCRModel
+from models.layout_model import LayoutModel
+from models.equation_model import EquationModel
+from models.chart_model import ChartModel
+from models.table_model import TableModel
+
+# Import pipeline & stages
+from pipeline.pipeline import Pipeline
+from pipeline.stage_metadata import StageMetadata
+from pipeline.stage_text import StageText
+from pipeline.stage_layout import StageLayout
+from pipeline.stage_tables import StageTables
+from pipeline.stage_math import StageMath
+from pipeline.stage_semantic import StageSemantic
+from pipeline.stage_fusion import StageFusion
+from pipeline.stage_validation import StageValidation
+from pipeline.stage_chunks import StageChunks
+from pipeline.stage_output import StageOutput
+
+# Import formatter & benchmark
+from utils.formatter import format_banner, print_hybrid_report
+from benchmark.benchmark import ExtractionBenchmark
 
 INPUT_DIR = os.path.join("data", "input")
 
@@ -210,7 +234,7 @@ def select_and_validate_pdf() -> str:
 
 def main():
     # Print welcome banner
-    print(format_banner("TRADITIONAL INTELLIGENT DOCUMENT PROCESSOR", Fore.BLUE))
+    print(format_banner("HYBRID INTELLIGENT PDF EXTRACTION ENGINE", Fore.BLUE))
     
     # Retrieve the single validated PDF source path
     pdf_path = select_and_validate_pdf()
@@ -218,31 +242,69 @@ def main():
     
     print(format_banner(f"PROCESSING SINGLE PDF SOURCE: {pdf_name.upper()}", Fore.CYAN))
     
-    # Initialize processors
-    processors = [
-        PyMuPDFProcessor(),
-        PDFMinerProcessor(),
-        PDFPlumberProcessor(),
-        PyPDFProcessor()
+    # Initialize Adapters
+    adapters = [
+        PyMuPDFExtractor(),
+        PDFMinerExtractor(),
+        PDFPlumberExtractor(),
+        PyPDFExtractor()
     ]
     
-    # Process the single PDF with all four processors
-    results = []
-    for processor in processors:
-        print(f"Running extraction using {Fore.YELLOW}{processor.library_name}{Style.RESET_ALL}...", end="", flush=True)
-        res = processor.process(pdf_path)
-        print(f" {Fore.GREEN}Done! ({res['processing_time']:.4f}s){Style.RESET_ALL}")
-        results.append(res)
-        
-    # Print detailed report for each library
-    print(format_banner(f"DETAILED EXTRACTION REPORTS", Fore.CYAN))
-    for res in results:
-        print_result_report(res)
-        
-    # Print comparison matrix and final recommendations
-    print(format_banner(f"FINAL PERFORMANCE & CAPABILITY COMPARISON", Fore.CYAN))
-    print_comparison_matrix(results)
-    print_recommendation_report(results)
+    # Initialize Classifiers
+    classifiers = {
+        "document": DocumentClassifier(),
+        "page": PageClassifier()
+    }
+    
+    # Initialize Models
+    models = {
+        "ocr": OCRModel(),
+        "layout": LayoutModel(),
+        "equation": EquationModel(),
+        "chart": ChartModel(),
+        "table": TableModel()
+    }
+    
+    # Define Pipeline Stages
+    stages = [
+        StageMetadata(),
+        StageText(),
+        StageLayout(),
+        StageTables(),
+        StageMath(),
+        StageSemantic(),
+        StageFusion(),
+        StageValidation(),
+        StageChunks(),
+        StageOutput()
+    ]
+    
+    # Instantiate and execute Pipeline
+    print(f"Executing intelligent hybrid extraction stages...", end="", flush=True)
+    pipeline = Pipeline(
+        stages=stages,
+        adapters=adapters,
+        classifiers=classifiers,
+        models=models
+    )
+    doc_graph = pipeline.execute(pdf_path, pdf_name)
+    print(f" {Fore.GREEN}Done!{Style.RESET_ALL}\n")
+    
+    # Output file paths info
+    output_dir = os.path.join("data", "output")
+    print(f"Structured JSON hierarchy saved to: {Fore.LIGHTBLUE_EX}{os.path.join(output_dir, 'hybrid_hierarchy.json')}{Style.RESET_ALL}")
+    print(f"Markdown hierarchy saved to: {Fore.LIGHTBLUE_EX}{os.path.join(output_dir, 'hybrid_hierarchy.md')}{Style.RESET_ALL}")
+    print(f"HTML hierarchy saved to: {Fore.LIGHTBLUE_EX}{os.path.join(output_dir, 'hybrid_hierarchy.html')}{Style.RESET_ALL}")
+    print(f"XML hierarchy saved to: {Fore.LIGHTBLUE_EX}{os.path.join(output_dir, 'hybrid_hierarchy.xml')}{Style.RESET_ALL}")
+    print(f"LaTeX hierarchy saved to: {Fore.LIGHTBLUE_EX}{os.path.join(output_dir, 'hybrid_hierarchy.tex')}{Style.RESET_ALL}")
+    print()
+    
+    # Print unified extraction report
+    print_hybrid_report(doc_graph)
+    
+    # Run and print comparative Benchmarking validation matrix
+    ExtractionBenchmark.run_benchmark(adapters, doc_graph, pdf_path)
+    
     print(format_banner(f"FINISHED PROCESSING: {pdf_name.upper()}", Fore.BLUE))
 
 if __name__ == "__main__":

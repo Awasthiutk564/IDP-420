@@ -58,6 +58,9 @@ class BasePDFProcessor(ABC):
             "table_count": -1,       # -1 indicates "Unsupported/Not extracted" by this library
             "fonts": [],
             "dimensions": [],        # List of tuples: (width, height) for each page
+            "charts_figures_detected": False,
+            "pages_text": [],
+            "pages_data": [],
             "warnings": []
         }
         
