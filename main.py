@@ -1,8 +1,15 @@
 import os
+os.environ["FLAGS_use_mkldnn"] = "0"
+os.environ["PADDLE_PDX_ENABLE_MKLDNN_BYDEFAULT"] = "0"
+
 import glob
 import sys
 from colorama import Fore, Style
 from PIL import Image
+
+# Import image utilities
+from utils.image_utils import select_image, validate_image, get_image_information
+from preprocess.image_preprocessor import ImagePreprocessor
 
 # Reconfigure stdout/stderr to use UTF-8 encoding on Windows to prevent Unicode encoding issues
 if sys.stdout.encoding != 'utf-8':
@@ -41,10 +48,34 @@ from pipeline.stage_chunks import StageChunks
 from pipeline.stage_output import StageOutput
 
 # Import formatter & benchmark
-from utils.formatter import format_banner, print_hybrid_report
+from utils.formatter import format_banner, print_hybrid_report, format_text_snippet
 from benchmark.benchmark import ExtractionBenchmark
 
 INPUT_DIR = os.path.join("data", "input")
+
+def select_document_type() -> str:
+    """
+    Prompts the user to choose between processing a PDF or an Image.
+    Returns 'pdf' or 'image'.
+    """
+    print(f"\n{Fore.CYAN}{Style.BRIGHT}  Select Document Type:{Style.RESET_ALL}")
+    print(f"  {Fore.WHITE}1. PDF Document{Style.RESET_ALL}")
+    print(f"  {Fore.WHITE}2. Image (OCR Text Extraction){Style.RESET_ALL}")
+    print()
+    
+    while True:
+        try:
+            choice = input(f"  Enter your choice (1 or 2): ").strip()
+        except (KeyboardInterrupt, EOFError):
+            print(f"\n{Fore.RED}Execution cancelled by user.{Style.RESET_ALL}")
+            sys.exit(0)
+        
+        if choice == "1":
+            return "pdf"
+        elif choice == "2":
+            return "image"
+        else:
+            print(f"  {Fore.RED}Invalid choice. Please enter 1 or 2.{Style.RESET_ALL}")
 
 def ensure_input_directory():
     """Ensures input directory exists, creating it if necessary."""
@@ -232,10 +263,104 @@ def select_and_validate_pdf() -> str:
             print(f"{Fore.RED}Error: {result}{Style.RESET_ALL}")
             print("Please enter a valid PDF path.\n")
 
+def process_image():
+    """
+    Full image processing workflow:
+    1. Opens a file picker dialog to select an image
+    2. Validates the selected image
+    3. Preprocesses the image (grayscale, denoise, contrast, threshold, deskew)
+    4. Runs OCR text extraction using PaddleOCR
+    5. Displays the extracted text in a formatted report
+    """
+    print(format_banner("IMAGE OCR TEXT EXTRACTION", Fore.CYAN))
+    
+    # Step 1: Open file picker dialog to select an image
+    while True:
+        print(f"{Fore.YELLOW}Opening file picker dialog... Please select an image.{Style.RESET_ALL}")
+        image_path = select_image()
+        
+        if not image_path:
+            print(f"{Fore.RED}No image selected. File picker was cancelled.{Style.RESET_ALL}")
+            try:
+                retry = input("Would you like to try again? (y/n): ").strip().lower()
+            except (KeyboardInterrupt, EOFError):
+                print(f"\n{Fore.RED}Execution cancelled by user.{Style.RESET_ALL}")
+                sys.exit(0)
+            if retry != 'y':
+                print(f"{Fore.YELLOW}Exiting image processing.{Style.RESET_ALL}")
+                return
+            continue
+        
+        # Step 2: Validate the selected image
+        is_valid, message = validate_image(image_path)
+        if is_valid:
+            print(f"{Fore.GREEN}Image validated successfully: {os.path.basename(image_path)}{Style.RESET_ALL}")
+            break
+        else:
+            print(f"{Fore.RED}Invalid image: {message}{Style.RESET_ALL}")
+            print("Please select a valid image file.\n")
+    
+    image_name = os.path.basename(image_path)
+    print(format_banner(f"PROCESSING IMAGE: {image_name.upper()}", Fore.CYAN))
+    
+    # Step 3: Get image information
+    info = get_image_information(image_path)
+    print(f"  {Fore.GREEN}{'File Name':<22} : {Fore.WHITE}{Style.BRIGHT}{image_name}{Style.RESET_ALL}")
+    print(f"  {Fore.GREEN}{'File Path':<22} : {Fore.WHITE}{Style.BRIGHT}{image_path}{Style.RESET_ALL}")
+    print(f"  {Fore.GREEN}{'Dimensions':<22} : {Fore.WHITE}{Style.BRIGHT}{info['width']} x {info['height']} px{Style.RESET_ALL}")
+    print(f"  {Fore.GREEN}{'Color Mode':<22} : {Fore.WHITE}{Style.BRIGHT}{info['mode']}{Style.RESET_ALL}")
+    print(f"  {Fore.GREEN}{'Format':<22} : {Fore.WHITE}{Style.BRIGHT}{info['format']}{Style.RESET_ALL}")
+    print()
+    
+    # Step 4: Preprocess the image
+    print(f"  {Fore.YELLOW}Preprocessing image (grayscale, denoise, contrast, threshold, deskew)...{Style.RESET_ALL}", end="", flush=True)
+    preprocessor = ImagePreprocessor()
+    processed_image = preprocessor.preprocess(image_path)
+    print(f" {Fore.GREEN}Done!{Style.RESET_ALL}")
+    
+    # Step 5: Run OCR text extraction using PaddleOCR
+    print(f"  {Fore.YELLOW}Running PaddleOCR text extraction...{Style.RESET_ALL}", end="", flush=True)
+    ocr_model = OCRModel()
+    extracted_text = ocr_model.extract_text(image_path)
+    print(f" {Fore.GREEN}Done!{Style.RESET_ALL}")
+    print()
+    
+    # Step 6: Display extracted text report
+    print(format_banner("OCR EXTRACTION RESULTS", Fore.GREEN))
+    
+    if extracted_text and extracted_text.strip():
+        word_count = len(extracted_text.split())
+        char_count = len(extracted_text)
+        line_count = len(extracted_text.strip().splitlines())
+        
+        print(f"  {Fore.GREEN}{'Total Characters':<22} : {Fore.WHITE}{Style.BRIGHT}{char_count:,}{Style.RESET_ALL}")
+        print(f"  {Fore.GREEN}{'Total Words':<22} : {Fore.WHITE}{Style.BRIGHT}{word_count:,}{Style.RESET_ALL}")
+        print(f"  {Fore.GREEN}{'Total Lines':<22} : {Fore.WHITE}{Style.BRIGHT}{line_count:,}{Style.RESET_ALL}")
+        print()
+        
+        # Display extracted text snippet
+        print(f"  {Fore.CYAN}{Style.BRIGHT}[Extracted Text]{Style.RESET_ALL}")
+        print(format_text_snippet(extracted_text))
+    else:
+        print(f"  {Fore.RED}No text could be extracted from this image.{Style.RESET_ALL}")
+        print(f"  {Fore.YELLOW}The image may not contain readable text, or the text may be too small/blurry.{Style.RESET_ALL}")
+    
+    print()
+    print(format_banner(f"FINISHED PROCESSING: {image_name.upper()}", Fore.BLUE))
+
 def main():
     # Print welcome banner
-    print(format_banner("HYBRID INTELLIGENT PDF EXTRACTION ENGINE", Fore.BLUE))
+    print(format_banner("HYBRID INTELLIGENT DOCUMENT EXTRACTION ENGINE", Fore.BLUE))
     
+    # Ask user to select document type
+    doc_type = select_document_type()
+    
+    if doc_type == "image":
+        # ── Image OCR workflow ──
+        process_image()
+        return
+    
+    # ── Existing PDF pipeline (unchanged) ──
     # Retrieve the single validated PDF source path
     pdf_path = select_and_validate_pdf()
     pdf_name = os.path.basename(pdf_path)
