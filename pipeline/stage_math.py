@@ -3,59 +3,83 @@ import re
 from typing import List, Dict, Any
 from .stage import Stage
 from utils.document_graph import DocumentNode, BlockNode
+from utils.math_normalizer import is_likely_math, full_math_to_latex
+
 
 class StageMath(Stage):
+    """
+    Pipeline stage: Mathematical Equation Extraction.
+
+    For every text block on each page:
+    1. Uses is_likely_math() from math_normalizer (Unicode-aware, sympy-backed)
+       to detect equation blocks more accurately than the old regex approach.
+    2. Promotes identified blocks to block_type="equation".
+    3. Runs the EquationModel to generate LaTeX, MathML, and symbol trees.
+
+    Improvements over v1:
+    - Delegates math detection to the centralized math_normalizer utility,
+      which handles Unicode superscripts, Greek letters, and common OCR
+      artifacts before deciding if a block is math.
+    - Passes is_digital flag correctly based on document_type.
+    - Avoids false-positives from table-of-contents dots and long words.
+    """
+
     def __init__(self):
         super().__init__(name="Mathematical Equation Extraction")
 
-    def run(self, doc_graph: DocumentNode, pdf_path: str, adapters: List[Any], classifiers: Dict[str, Any], models: Dict[str, Any]) -> DocumentNode:
+    def run(
+        self,
+        doc_graph: DocumentNode,
+        pdf_path: str,
+        adapters: List[Any],
+        classifiers: Dict[str, Any],
+        models: Dict[str, Any],
+    ) -> DocumentNode:
+
         equation_model = models.get("equation")
-        
+        is_digital = (doc_graph.document_type != "Scanned")
+
         for page in doc_graph.pages:
             start_time = time.time()
             blocks = page.statistics.get("blocks", [])
-            
+
             for block in blocks:
-                # Detect equations based on math symbol heuristic
                 text = block.text
-                is_math = False
-                
-                # Exclude TOC lines with leader dots
-                if "..." in text or " . . " in text:
-                    is_math = False
-                else:
-                    # Look for LaTeX expressions or math equations
-                    # 1. Variables equal to numbers/expressions, e.g., x = 5, y = x + 2, E = mc^2, f(x) = ...
-                    if re.search(r'\b[x-zX-Z]\s*=\s*[-+]?\d*\.?\d+', text):
-                        is_math = True
-                    elif re.search(r'\b[a-zA-Z]\s*[-+*/=]\s*[a-zA-Z0-9]', text) and not re.search(r'\b[a-zA-Z]{4,}\b', text): # Simple algebraic relations, avoiding natural language words
-                        is_math = True
-                    elif re.search(r'\b[a-zA-Z]\(x\)\s*=\s*', text): # f(x) = ...
-                        is_math = True
-                    # 2. LaTeX commands
-                    elif re.search(r'\\(?:sum|int|prod|alpha|beta|gamma|delta|pi|sigma|theta|lambda|phi|psi|omega|sqrt|frac|begin|end|sin|cos|tan|log|ln|lim|partial|nabla)\b', text):
-                        is_math = True
-                    # 3. Explicit math superscript/subscript notation
-                    elif re.search(r'[a-zA-Z0-9]\^[a-zA-Z0-9]', text) or re.search(r'[a-zA-Z0-9]_[a-zA-Z0-9]', text):
-                        is_math = True
-                    # 4. Standard Greek math letters & operators
-                    elif any(sym in text for sym in ["α", "β", "γ", "π", "Σ", "∫", "√", "±", "×", "÷", "λ", "θ", "∞", "≈", "≠", "≤", "≥", "∂", "∇", "Δ", "Ω", "μ", "σ", "φ", "ψ", "ω", "∝", "≡"]):
-                        if re.search(r'\d|[a-zA-Z]', text):
-                            is_math = True
-                        
-                if is_math:
+                if not text or not text.strip():
+                    continue
+
+                # Skip already-classified non-text blocks
+                if block.block_type in ("table", "figure", "chart", "image"):
+                    continue
+
+                # Use the centralised, Unicode-aware heuristic
+                if is_likely_math(text):
                     block.block_type = "equation"
-                    # Run equation model
+
                     if equation_model:
+                        # full_math_to_latex is called inside equation_model.run()
+                        # via normalize_math_text -> extract_latex_from_sympy,
+                        # but we still pass the raw text so the model can do it all.
                         latex, mathml, symbol_tree, prov = equation_model.run(
-                            block_text=text, 
-                            is_digital=(doc_graph.document_type != "Scanned")
+                            block_text=text,
+                            is_digital=is_digital,
                         )
                         block.latex = latex
                         block.mathml = mathml
                         block.symbol_tree = symbol_tree
                         block.provenance = prov
-                        
+                    else:
+                        # Fallback: at least store normalized LaTeX
+                        block.latex = full_math_to_latex(text)
+                        block.mathml = ""
+                        block.symbol_tree = {}
+                        block.provenance = {
+                            "library": "math_normalizer",
+                            "version": "2.0",
+                            "confidence": 0.70,
+                            "fallback": True,
+                        }
+
             page.statistics["processing_time"] += (time.time() - start_time)
-            
+
         return doc_graph

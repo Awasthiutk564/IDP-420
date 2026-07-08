@@ -253,54 +253,44 @@ def process_image(image_path: str):
     """
     Full image processing workflow:
     1. Preprocesses the image (grayscale, denoise, contrast, threshold, deskew)
-    2. Runs OCR text extraction using PaddleOCR
-    3. Displays the extracted text in a formatted report
+    2. Runs OCR text and Math extraction using PaddleOCR
+    3. Displays the extracted text and math in a formatted report
     """
-    print(format_banner("IMAGE OCR TEXT EXTRACTION", Fore.CYAN))
+    print(format_banner("IMAGE OCR AND MATH EXTRACTION", Fore.CYAN))
     image_name = os.path.basename(image_path)
     print(format_banner(f"PROCESSING IMAGE: {image_name.upper()}", Fore.CYAN))
     
-    # Step 3: Get image information
+    # Get image information
     info = get_image_information(image_path)
     print(f"  {Fore.GREEN}{'File Name':<22} : {Fore.WHITE}{Style.BRIGHT}{image_name}{Style.RESET_ALL}")
-    print(f"  {Fore.GREEN}{'File Path':<22} : {Fore.WHITE}{Style.BRIGHT}{image_path}{Style.RESET_ALL}")
     print(f"  {Fore.GREEN}{'Dimensions':<22} : {Fore.WHITE}{Style.BRIGHT}{info['width']} x {info['height']} px{Style.RESET_ALL}")
-    print(f"  {Fore.GREEN}{'Color Mode':<22} : {Fore.WHITE}{Style.BRIGHT}{info['mode']}{Style.RESET_ALL}")
-    print(f"  {Fore.GREEN}{'Format':<22} : {Fore.WHITE}{Style.BRIGHT}{info['format']}{Style.RESET_ALL}")
-    print()
     
-    # Step 4: Preprocess the image
-    print(f"  {Fore.YELLOW}Preprocessing image (grayscale, denoise, contrast, threshold, deskew)...{Style.RESET_ALL}", end="", flush=True)
-    preprocessor = ImagePreprocessor()
-    processed_image = preprocessor.preprocess(image_path)
-    print(f" {Fore.GREEN}Done!{Style.RESET_ALL}")
-    
-    # Step 5: Run OCR text extraction using PaddleOCR
-    print(f"  {Fore.YELLOW}Running PaddleOCR text extraction...{Style.RESET_ALL}", end="", flush=True)
+    # Run text + math extraction
+    print(f"  {Fore.YELLOW}Running OCR and Math extraction...{Style.RESET_ALL}", end="", flush=True)
     ocr_model = OCRModel()
-    extracted_text = ocr_model.extract_text(image_path)
-    print(f" {Fore.GREEN}Done!{Style.RESET_ALL}")
-    print()
+    results = ocr_model.extract_text_with_math(image_path)
+    print(f" {Fore.GREEN}Done!{Style.RESET_ALL}\n")
     
-    # Step 6: Display extracted text report
-    print(format_banner("OCR EXTRACTION RESULTS", Fore.GREEN))
+    # Display Results
+    print(format_banner("EXTRACTION RESULTS", Fore.GREEN))
     
-    if extracted_text and extracted_text.strip():
-        word_count = len(extracted_text.split())
-        char_count = len(extracted_text)
-        line_count = len(extracted_text.strip().splitlines())
+    if results:
+        extracted_text = results.get("full_text", "")
+        math_content = results.get("math_lines", [])
         
-        print(f"  {Fore.GREEN}{'Total Characters':<22} : {Fore.WHITE}{Style.BRIGHT}{char_count:,}{Style.RESET_ALL}")
-        print(f"  {Fore.GREEN}{'Total Words':<22} : {Fore.WHITE}{Style.BRIGHT}{word_count:,}{Style.RESET_ALL}")
-        print(f"  {Fore.GREEN}{'Total Lines':<22} : {Fore.WHITE}{Style.BRIGHT}{line_count:,}{Style.RESET_ALL}")
-        print()
+        print(f"  {Fore.GREEN}{'Total Characters':<22} : {Fore.WHITE}{Style.BRIGHT}{len(extracted_text):,}{Style.RESET_ALL}")
+        print(f"  {Fore.GREEN}{'Math Equations Found':<22} : {Fore.WHITE}{Style.BRIGHT}{len(math_content)}{Style.RESET_ALL}\n")
         
-        # Display extracted text snippet
+        if math_content:
+            print(f"  {Fore.CYAN}{Style.BRIGHT}[Extracted Math Equations]{Style.RESET_ALL}")
+            for i, eq in enumerate(math_content, 1):
+                print(f"  {i}. {Fore.YELLOW}{eq}{Style.RESET_ALL}")
+            print()
+            
         print(f"  {Fore.CYAN}{Style.BRIGHT}[Extracted Text]{Style.RESET_ALL}")
         print(format_text_snippet(extracted_text))
     else:
-        print(f"  {Fore.RED}No text could be extracted from this image.{Style.RESET_ALL}")
-        print(f"  {Fore.YELLOW}The image may not contain readable text, or the text may be too small/blurry.{Style.RESET_ALL}")
+        print(f"  {Fore.RED}No content could be extracted from this image.{Style.RESET_ALL}")
     
     print()
     print(format_banner(f"FINISHED PROCESSING: {image_name.upper()}", Fore.BLUE))
