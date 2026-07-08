@@ -25,13 +25,21 @@ class StageMath(Stage):
                     is_math = False
                 else:
                     # Look for LaTeX expressions or math equations
-                    if re.search(r'\b[x-yX-Y]\s*=\s*[-+]?\d*\.?\d+', text):
+                    # 1. Variables equal to numbers/expressions, e.g., x = 5, y = x + 2, E = mc^2, f(x) = ...
+                    if re.search(r'\b[x-zX-Z]\s*=\s*[-+]?\d*\.?\d+', text):
                         is_math = True
-                    elif re.search(r'\\(?:sum|int|prod|alpha|beta|gamma|delta|pi|sigma|theta|lambda|phi|psi|omega|sqrt|frac|begin|end)\b', text):
+                    elif re.search(r'\b[a-zA-Z]\s*[-+*/=]\s*[a-zA-Z0-9]', text) and not re.search(r'\b[a-zA-Z]{4,}\b', text): # Simple algebraic relations, avoiding natural language words
                         is_math = True
-                    elif re.search(r'\b[a-zA-Z]\s*[-+*=]\s*[a-zA-Z0-9]', text):
+                    elif re.search(r'\b[a-zA-Z]\(x\)\s*=\s*', text): # f(x) = ...
                         is_math = True
-                    elif any(sym in text for sym in ["α", "β", "γ", "π", "Σ", "∫", "√", "±", "×", "÷", "λ", "θ", "∞", "≈", "≠", "≤", "≥", "∂", "∇"]):
+                    # 2. LaTeX commands
+                    elif re.search(r'\\(?:sum|int|prod|alpha|beta|gamma|delta|pi|sigma|theta|lambda|phi|psi|omega|sqrt|frac|begin|end|sin|cos|tan|log|ln|lim|partial|nabla)\b', text):
+                        is_math = True
+                    # 3. Explicit math superscript/subscript notation
+                    elif re.search(r'[a-zA-Z0-9]\^[a-zA-Z0-9]', text) or re.search(r'[a-zA-Z0-9]_[a-zA-Z0-9]', text):
+                        is_math = True
+                    # 4. Standard Greek math letters & operators
+                    elif any(sym in text for sym in ["α", "β", "γ", "π", "Σ", "∫", "√", "±", "×", "÷", "λ", "θ", "∞", "≈", "≠", "≤", "≥", "∂", "∇", "Δ", "Ω", "μ", "σ", "φ", "ψ", "ω", "∝", "≡"]):
                         if re.search(r'\d|[a-zA-Z]', text):
                             is_math = True
                         

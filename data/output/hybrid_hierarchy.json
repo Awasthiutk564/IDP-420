@@ -1,5 +1,5 @@
 {
-  "id": "doc_b633813e",
+  "id": "doc_923376a4",
   "filename": "integral.pdf",
   "document_type": "Normal Document",
   "metadata": {
@@ -13,7 +13,7 @@
   "page_count": 1,
   "pages": [
     {
-      "id": "page_55208e89",
+      "id": "page_e1ab2725",
       "page_number": 1,
       "width": 595.2999877929688,
       "height": 841.9000244140625,
@@ -23,17 +23,17 @@
       "ocr_recommended": false,
       "confidence_score": 1.0,
       "statistics": {
-        "processing_time": 0.0020720958709716797,
+        "processing_time": 0.002910614013671875,
         "memory_usage": 0.0,
         "extractor": "PyMuPDF+PDFMiner Hybrid",
         "warnings": [],
         "errors": [],
         "fallbacks": [],
         "temp_lines": [
-          "<utils.document_graph.LineNode object at 0x00000297AA5CC190>"
+          "<utils.document_graph.LineNode object at 0x000001F5566E2350>"
         ],
         "blocks": [
-          "<utils.document_graph.BlockNode object at 0x00000297A10EC790>"
+          "<utils.document_graph.BlockNode object at 0x000001F54C164450>"
         ],
         "headers_list": [
           "(1+3x)x2 dx"
@@ -42,7 +42,7 @@
       },
       "sections": [
         {
-          "id": "section_a9daa0b9",
+          "id": "section_d20f886b",
           "section_type": "header",
           "bbox": [
             0,
@@ -52,7 +52,7 @@
           ],
           "blocks": [
             {
-              "id": "block_2b027bae",
+              "id": "block_852116bb",
               "block_type": "paragraph",
               "text": "(1+3x)x2 dx",
               "bbox": [
@@ -86,7 +86,7 @@
               },
               "lines": [
                 {
-                  "id": "line_478b34d1",
+                  "id": "line_3b169f56",
                   "text": "(1+3x)x2 dx",
                   "bbox": [
                     72.0,
@@ -103,7 +103,7 @@
                   },
                   "words": [
                     {
-                      "id": "word_c8b31d46",
+                      "id": "word_6ad25ef8",
                       "text": "(1+3x)x2",
                       "bbox": [
                         72.0,
@@ -124,7 +124,7 @@
                       },
                       "characters": [
                         {
-                          "id": "char_cb10b9eb",
+                          "id": "char_2743421d",
                           "char": "(",
                           "bbox": [
                             72.0,
@@ -145,7 +145,7 @@
                           }
                         },
                         {
-                          "id": "char_7622c0fd",
+                          "id": "char_847f74f6",
                           "char": "1",
                           "bbox": [
                             75.636,
@@ -166,7 +166,7 @@
                           }
                         },
                         {
-                          "id": "char_0ad78f7e",
+                          "id": "char_26701d73",
                           "char": "+",
                           "bbox": [
                             81.72,
@@ -187,7 +187,7 @@
                           }
                         },
                         {
-                          "id": "char_d81a1727",
+                          "id": "char_2b56aac1",
                           "char": "3",
                           "bbox": [
                             87.696,
@@ -208,7 +208,7 @@
                           }
                         },
                         {
-                          "id": "char_5c3e529d",
+                          "id": "char_6a1440db",
                           "char": "x",
                           "bbox": [
                             93.78,
@@ -229,7 +229,7 @@
                           }
                         },
                         {
-                          "id": "char_05b96ac4",
+                          "id": "char_2da30fb7",
                           "char": ")",
                           "bbox": [
                             98.976,
@@ -250,7 +250,7 @@
                           }
                         },
                         {
-                          "id": "char_11491190",
+                          "id": "char_d31ea1a9",
                           "char": "x",
                           "bbox": [
                             102.612,
@@ -271,7 +271,7 @@
                           }
                         },
                         {
-                          "id": "char_f376a860",
+                          "id": "char_76630ce8",
                           "char": "2",
                           "bbox": [
                             107.82,
@@ -294,7 +294,7 @@
                       ]
                     },
                     {
-                      "id": "word_2710bb1d",
+                      "id": "word_b3ca20c9",
                       "text": "dx",
                       "bbox": [
                         114.62,
@@ -315,7 +315,7 @@
                       },
                       "characters": [
                         {
-                          "id": "char_8ee94820",
+                          "id": "char_f450e36f",
                           "char": "d",
                           "bbox": [
                             114.62,
@@ -336,7 +336,7 @@
                           }
                         },
                         {
-                          "id": "char_2e6e64ad",
+                          "id": "char_b9d76810",
                           "char": "x",
                           "bbox": [
                             120.919999523,
