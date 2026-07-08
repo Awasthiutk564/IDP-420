@@ -59,12 +59,20 @@ class PDFPlumberExtractor(BaseExtractor):
                     except Exception:
                         pass
 
+                    # Extract raw text
+                    text = ""
+                    try:
+                        text = page.extract_text() or ""
+                    except Exception:
+                        pass
+
                     pages_data.append({
                         "page_number": idx + 1,
                         "width": width,
                         "height": height,
                         "tables": tables_raw,
                         "lines": lines,
+                        "raw_text": text,
                         "processing_time": time.time() - start_time
                     })
         except Exception:
