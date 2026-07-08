@@ -1,0 +1,428 @@
+{
+  "id": "doc_923376a4",
+  "filename": "integral.pdf",
+  "document_type": "Normal Document",
+  "metadata": {
+    "title": "(1+3x)x2 dx",
+    "author": "Kartikay Mishra",
+    "producer": "Microsoft® Word 2021",
+    "creation_date": "2026-07-07 23:56:45+05:30",
+    "is_encrypted": false,
+    "form_fields": {}
+  },
+  "page_count": 1,
+  "pages": [
+    {
+      "id": "page_e1ab2725",
+      "page_number": 1,
+      "width": 595.2999877929688,
+      "height": 841.9000244140625,
+      "page_type": "Cover Page",
+      "reading_complexity": "Single column",
+      "document_quality": "Digitally generated",
+      "ocr_recommended": false,
+      "confidence_score": 1.0,
+      "statistics": {
+        "processing_time": 0.002910614013671875,
+        "memory_usage": 0.0,
+        "extractor": "PyMuPDF+PDFMiner Hybrid",
+        "warnings": [],
+        "errors": [],
+        "fallbacks": [],
+        "temp_lines": [
+          "<utils.document_graph.LineNode object at 0x000001F5566E2350>"
+        ],
+        "blocks": [
+          "<utils.document_graph.BlockNode object at 0x000001F54C164450>"
+        ],
+        "headers_list": [
+          "(1+3x)x2 dx"
+        ],
+        "footers_list": []
+      },
+      "sections": [
+        {
+          "id": "section_d20f886b",
+          "section_type": "header",
+          "bbox": [
+            0,
+            0,
+            595.2999877929688,
+            101.0280029296875
+          ],
+          "blocks": [
+            {
+              "id": "block_852116bb",
+              "block_type": "paragraph",
+              "text": "(1+3x)x2 dx",
+              "bbox": [
+                72.0,
+                73.5,
+                126.115999523,
+                86.5
+              ],
+              "confidence": 1.0,
+              "provenance": {
+                "library": "pdfminer.six + PyMuPDF",
+                "version": "1.0",
+                "confidence": 1.0,
+                "fallback": false,
+                "fusion_matrix": {
+                  "yolo": "paragraph",
+                  "pdfminer": "paragraph",
+                  "pymupdf": "paragraph",
+                  "font_score": 1.0,
+                  "agreement_score": 1.0
+                }
+              },
+              "relationships": {
+                "parent": null,
+                "next": null,
+                "prev": null,
+                "caption_of": null,
+                "references": [],
+                "footnotes": [],
+                "contains_equations": []
+              },
+              "lines": [
+                {
+                  "id": "line_3b169f56",
+                  "text": "(1+3x)x2 dx",
+                  "bbox": [
+                    72.0,
+                    73.5,
+                    126.115999523,
+                    86.5
+                  ],
+                  "confidence": 0.99,
+                  "provenance": {
+                    "library": "pdfminer.six",
+                    "version": "20221105",
+                    "confidence": 0.99,
+                    "fallback": false
+                  },
+                  "words": [
+                    {
+                      "id": "word_6ad25ef8",
+                      "text": "(1+3x)x2",
+                      "bbox": [
+                        72.0,
+                        73.5,
+                        111.87599999999999,
+                        86.5
+                      ],
+                      "font_name": "Calibri",
+                      "font_size": 12.0,
+                      "font_style": "Regular",
+                      "color": "#000000",
+                      "confidence": 0.99,
+                      "provenance": {
+                        "library": "pdfminer.six",
+                        "version": "20221105",
+                        "confidence": 0.99,
+                        "fallback": false
+                      },
+                      "characters": [
+                        {
+                          "id": "char_2743421d",
+                          "char": "(",
+                          "bbox": [
+                            72.0,
+                            74.5,
+                            75.636,
+                            86.5
+                          ],
+                          "font_name": "Calibri",
+                          "font_size": 12.0,
+                          "font_style": "Regular",
+                          "color": "#000000",
+                          "confidence": 0.99,
+                          "provenance": {
+                            "library": "pdfminer.six",
+                            "version": "20221105",
+                            "confidence": 0.99,
+                            "fallback": false
+                          }
+                        },
+                        {
+                          "id": "char_847f74f6",
+                          "char": "1",
+                          "bbox": [
+                            75.636,
+                            74.5,
+                            81.72,
+                            86.5
+                          ],
+                          "font_name": "Calibri",
+                          "font_size": 12.0,
+                          "font_style": "Regular",
+                          "color": "#000000",
+                          "confidence": 0.99,
+                          "provenance": {
+                            "library": "pdfminer.six",
+                            "version": "20221105",
+                            "confidence": 0.99,
+                            "fallback": false
+                          }
+                        },
+                        {
+                          "id": "char_26701d73",
+                          "char": "+",
+                          "bbox": [
+                            81.72,
+                            74.5,
+                            87.696,
+                            86.5
+                          ],
+                          "font_name": "Calibri",
+                          "font_size": 12.0,
+                          "font_style": "Regular",
+                          "color": "#000000",
+                          "confidence": 0.99,
+                          "provenance": {
+                            "library": "pdfminer.six",
+                            "version": "20221105",
+                            "confidence": 0.99,
+                            "fallback": false
+                          }
+                        },
+                        {
+                          "id": "char_2b56aac1",
+                          "char": "3",
+                          "bbox": [
+                            87.696,
+                            74.5,
+                            93.78,
+                            86.5
+                          ],
+                          "font_name": "Calibri",
+                          "font_size": 12.0,
+                          "font_style": "Regular",
+                          "color": "#000000",
+                          "confidence": 0.99,
+                          "provenance": {
+                            "library": "pdfminer.six",
+                            "version": "20221105",
+                            "confidence": 0.99,
+                            "fallback": false
+                          }
+                        },
+                        {
+                          "id": "char_6a1440db",
+                          "char": "x",
+                          "bbox": [
+                            93.78,
+                            74.5,
+                            98.976,
+                            86.5
+                          ],
+                          "font_name": "Calibri",
+                          "font_size": 12.0,
+                          "font_style": "Regular",
+                          "color": "#000000",
+                          "confidence": 0.99,
+                          "provenance": {
+                            "library": "pdfminer.six",
+                            "version": "20221105",
+                            "confidence": 0.99,
+                            "fallback": false
+                          }
+                        },
+                        {
+                          "id": "char_2da30fb7",
+                          "char": ")",
+                          "bbox": [
+                            98.976,
+                            74.5,
+                            102.612,
+                            86.5
+                          ],
+                          "font_name": "Calibri",
+                          "font_size": 12.0,
+                          "font_style": "Regular",
+                          "color": "#000000",
+                          "confidence": 0.99,
+                          "provenance": {
+                            "library": "pdfminer.six",
+                            "version": "20221105",
+                            "confidence": 0.99,
+                            "fallback": false
+                          }
+                        },
+                        {
+                          "id": "char_d31ea1a9",
+                          "char": "x",
+                          "bbox": [
+                            102.612,
+                            74.5,
+                            107.80799999999999,
+                            86.5
+                          ],
+                          "font_name": "Calibri",
+                          "font_size": 12.0,
+                          "font_style": "Regular",
+                          "color": "#000000",
+                          "confidence": 0.99,
+                          "provenance": {
+                            "library": "pdfminer.six",
+                            "version": "20221105",
+                            "confidence": 0.99,
+                            "fallback": false
+                          }
+                        },
+                        {
+                          "id": "char_76630ce8",
+                          "char": "2",
+                          "bbox": [
+                            107.82,
+                            73.5,
+                            111.87599999999999,
+                            81.5
+                          ],
+                          "font_name": "Calibri",
+                          "font_size": 8.0,
+                          "font_style": "Regular",
+                          "color": "#000000",
+                          "confidence": 0.99,
+                          "provenance": {
+                            "library": "pdfminer.six",
+                            "version": "20221105",
+                            "confidence": 0.99,
+                            "fallback": false
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "id": "word_b3ca20c9",
+                      "text": "dx",
+                      "bbox": [
+                        114.62,
+                        74.5,
+                        126.115999523,
+                        86.5
+                      ],
+                      "font_name": "Calibri",
+                      "font_size": 12.0,
+                      "font_style": "Regular",
+                      "color": "#000000",
+                      "confidence": 0.99,
+                      "provenance": {
+                        "library": "pdfminer.six",
+                        "version": "20221105",
+                        "confidence": 0.99,
+                        "fallback": false
+                      },
+                      "characters": [
+                        {
+                          "id": "char_f450e36f",
+                          "char": "d",
+                          "bbox": [
+                            114.62,
+                            74.5,
+                            120.92,
+                            86.5
+                          ],
+                          "font_name": "Calibri",
+                          "font_size": 12.0,
+                          "font_style": "Regular",
+                          "color": "#000000",
+                          "confidence": 0.99,
+                          "provenance": {
+                            "library": "pdfminer.six",
+                            "version": "20221105",
+                            "confidence": 0.99,
+                            "fallback": false
+                          }
+                        },
+                        {
+                          "id": "char_b9d76810",
+                          "char": "x",
+                          "bbox": [
+                            120.919999523,
+                            74.5,
+                            126.115999523,
+                            86.5
+                          ],
+                          "font_name": "Calibri",
+                          "font_size": 12.0,
+                          "font_style": "Regular",
+                          "color": "#000000",
+                          "confidence": 0.99,
+                          "provenance": {
+                            "library": "pdfminer.six",
+                            "version": "20221105",
+                            "confidence": 0.99,
+                            "fallback": false
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "tables": [],
+      "images": [],
+      "charts": [],
+      "hyperlinks": []
+    }
+  ],
+  "chunks": [
+    {
+      "id": "chunk_1",
+      "text": "(1+3x)x2 dx",
+      "page": 1,
+      "bbox": [
+        72.0,
+        73.5,
+        126.115999523,
+        86.5
+      ],
+      "heading": "Main Header",
+      "references": [],
+      "contains_equations": [],
+      "embedding": [
+        0.11,
+        0.12,
+        0.13,
+        0.14,
+        0.15,
+        0.16,
+        0.17,
+        0.18,
+        0.19,
+        0.2,
+        0.21,
+        0.22,
+        0.23,
+        0.24,
+        0.25,
+        0.26,
+        0.27,
+        0.28,
+        0.29,
+        0.3,
+        0.31,
+        0.32,
+        0.33,
+        0.34,
+        0.35,
+        0.36,
+        0.37,
+        0.38,
+        0.39,
+        0.4,
+        0.41,
+        0.42
+      ]
+    }
+  ],
+  "knowledge_graph": {
+    "entities": [],
+    "relationships": []
+  }
+}
