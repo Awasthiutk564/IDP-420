@@ -19,6 +19,32 @@ class StageValidation(Stage):
             has_h2 = any(b.block_type == "heading_2" for b in blocks)
             if has_h2 and not has_h1:
                 warnings.append("Validation Warning: Detected H2 headings without a preceding H1 title block.")
+                
+            # 5. Strict additional improvements validation rules (Issue 10)
+            import re
+            for b in blocks:
+                # 5.1 Contact Info / Email / Phone cannot become Equation
+                if b.block_type == "equation":
+                    is_contact = b.block_type in ["contact_info", "metadata"] or \
+                                 any(k in b.text.lower() for k in ["email", "phone", "linkedin", "github", "contact"]) or \
+                                 bool(re.search(r'\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b', b.text)) or \
+                                 bool(re.search(r'\b(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b', b.text))
+                    if is_contact:
+                        warnings.append(f"Validation Warning: Equation block {b.id} is marked as math but contains contact/metadata text.")
+                        
+                # 5.2 Logo / Figure cannot become Chart
+                if b.block_type == "chart" and b.block_type in ["logo", "icon", "figure"]:
+                    warnings.append(f"Validation Warning: Block {b.id} is classified as chart but matches logo/figure characteristics.")
+                    
+                # 5.3 Bullet / List cannot become Heading
+                if b.block_type.startswith("heading"):
+                    is_bullet = b.text.strip().startswith(('•', '●', '-', '*', '✓', '➤', '○', '▪', '■', '◦', '–'))
+                    if is_bullet:
+                        warnings.append(f"Validation Warning: Heading block {b.id} starts with a list bullet.")
+                        
+                # 5.4 URL cannot become Heading
+                if b.block_type.startswith("heading") and re.search(r'https?://|www\.', b.text, re.IGNORECASE):
+                    warnings.append(f"Validation Warning: Heading block {b.id} contains a URL.")
 
             # 2. Table row/col validation
             for tbl in page.tables:

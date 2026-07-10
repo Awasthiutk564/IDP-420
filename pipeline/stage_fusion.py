@@ -20,13 +20,14 @@ class StageFusion(Stage):
             for block in blocks:
                 # 1. Consensus Voting
                 yolo_pred = "title" if "title" in block.text.lower() or block.block_type == "heading_1" else block.block_type
-                pdfminer_pred = "heading_1" if block.block_type.startswith("heading") else "paragraph"
+                pdfminer_pred = "heading_1" if block.block_type.startswith("heading") else ("paragraph" if block.block_type not in ["logo", "icon", "photo", "diagram", "contact_info", "chart", "table", "equation", "footnote", "reference", "page_number"] else block.block_type)
                 fitz_pred = block.block_type
                 
                 votes = {
                     "title": 0.0, "heading_1": 0.0, "heading_2": 0.0, "heading_3": 0.0,
                     "paragraph": 0.0, "list_item": 0.0, "table": 0.0, "chart": 0.0,
-                    "figure": 0.0, "equation": 0.0, "footnote": 0.0, "reference": 0.0, "page_number": 0.0
+                    "figure": 0.0, "equation": 0.0, "footnote": 0.0, "reference": 0.0, "page_number": 0.0,
+                    "logo": 0.0, "icon": 0.0, "photo": 0.0, "diagram": 0.0, "contact_info": 0.0
                 }
                 
                 w_yolo = 0.45
@@ -84,19 +85,58 @@ class StageFusion(Stage):
                         overlaps.append(intersection / union if union > 0 else 0.0)
                     agreement_score = max(overlaps) if overlaps else 0.5
                 
-                # Calculate calculated confidence (weights: font_score: 0.3, agreement_score: 0.5, votes_winning: 0.2)
-                voting_confidence = votes[winning_type] # Max 1.0
-                computed_conf = (0.3 * font_score) + (0.5 * agreement_score) + (0.2 * voting_confidence)
-                
+                # 4. Refined Confidence Scoring heuristics (Issue 6)
+                unique_preds = len({yolo_pred, pdfminer_pred, fitz_pred})
+                if unique_preds == 1:
+                    extractor_agreement = 1.0
+                elif unique_preds == 2:
+                    extractor_agreement = 0.75
+                else:
+                    extractor_agreement = 0.4
+                    
+                is_block_bold = any(word.font_style == "Bold" for line in block.lines for word in getattr(line, 'words', []))
+                if winning_type.startswith("heading") or winning_type == "title":
+                    bold_score = 1.0 if is_block_bold else 0.5
+                else:
+                    bold_score = 1.0 if not is_block_bold else 0.7
+                    
+                base_size = 10.0
+                if font_sizes:
+                    avg_block_size = sum(font_sizes) / len(font_sizes)
+                    if winning_type == "heading_1" or winning_type == "title":
+                        size_heuristic_score = 1.0 if avg_block_size >= base_size + 4.0 else 0.5
+                    elif winning_type == "heading_2":
+                        size_heuristic_score = 1.0 if avg_block_size >= base_size + 2.0 else 0.6
+                    elif winning_type == "heading_3":
+                        size_heuristic_score = 1.0 if avg_block_size >= base_size + 0.8 else 0.7
+                    else:
+                        size_heuristic_score = 1.0 if avg_block_size <= base_size + 1.5 else 0.6
+                else:
+                    size_heuristic_score = 0.8
+                    
+                voting_confidence = votes[winning_type]
+                computed_conf = (0.20 * font_score) + \
+                                (0.25 * agreement_score) + \
+                                (0.20 * voting_confidence) + \
+                                (0.15 * extractor_agreement) + \
+                                (0.10 * bold_score) + \
+                                (0.10 * size_heuristic_score)
+                # Override to normalize heading confidence when no ambiguity exists (Issue 5)
+                if winning_type.startswith("heading") or winning_type in ["title", "contact_info"]:
+                    if font_score >= 0.8 and extractor_agreement >= 0.75:
+                        computed_conf = 0.95
+                        
                 block.block_type = winning_type
-                block.confidence = round(max(0.1, min(1.0, computed_conf)), 2)
+                block.confidence = round(round(max(0.0, min(1.0, computed_conf)) * 20) / 20, 2)
                 block.provenance["confidence"] = block.confidence
                 block.provenance["fusion_matrix"] = {
                     "yolo": yolo_pred,
                     "pdfminer": pdfminer_pred,
                     "pymupdf": fitz_pred,
                     "font_score": round(font_score, 2),
-                    "agreement_score": round(agreement_score, 2)
+                    "agreement_score": round(agreement_score, 2),
+                    "bold_score": bold_score,
+                    "size_heuristic_score": size_heuristic_score
                 }
                 
             # Recompute page-level average confidence score
@@ -105,6 +145,58 @@ class StageFusion(Stage):
             else:
                 page.confidence_score = 1.0
                 
+            # Rebuild final parent-child hierarchy on page blocks (Issue 3 & 4)
+            curr_h1 = None
+            curr_h2 = None
+            curr_h3 = None
+            curr_list_item = None
+            
+            # Sort them spatially first to ensure correct sequential hierarchy
+            blocks = sorted(blocks, key=lambda b: (b.bbox[1], b.bbox[0]))
+            page.statistics["blocks"] = blocks
+            
+            for bn in blocks:
+                bn.parent_id = None
+                
+                # Convert bulleted sub-list items under role/project titles to paragraph blocks
+                if bn.block_type == "list_item":
+                    has_bullet = bn.text.strip().startswith(('●', '•', '-', '*', '✓', '➤', '○', '▪', '■', '◦', '–'))
+                    if has_bullet and curr_list_item and not curr_list_item.text.strip().startswith(('●', '•', '-', '*', '✓', '➤', '○', '▪', '■', '◦', '–')):
+                        bn.block_type = "paragraph"
+                        bn.parent_id = curr_list_item.id
+                        continue
+                
+                if bn.block_type == "heading_1":
+                    curr_h1 = bn
+                    curr_h2 = None
+                    curr_h3 = None
+                    curr_list_item = None
+                elif bn.block_type == "heading_2":
+                    curr_h2 = bn
+                    curr_h3 = None
+                    curr_list_item = None
+                    if curr_h1:
+                        bn.parent_id = curr_h1.id
+                elif bn.block_type == "heading_3":
+                    curr_h3 = bn
+                    curr_list_item = None
+                    if curr_h2:
+                        bn.parent_id = curr_h2.id
+                    elif curr_h1:
+                        bn.parent_id = curr_h1.id
+                elif bn.block_type == "list_item":
+                    curr_list_item = bn
+                    active_parent = curr_h3 or curr_h2 or curr_h1
+                    if active_parent:
+                        bn.parent_id = active_parent.id
+                else:
+                    if curr_list_item and bn.block_type == "paragraph":
+                        bn.parent_id = curr_list_item.id
+                    else:
+                        active_parent = curr_h3 or curr_h2 or curr_h1
+                        if active_parent:
+                            bn.parent_id = active_parent.id
+                            
             page.statistics["processing_time"] += (time.time() - start_time)
             
         return doc_graph

@@ -188,6 +188,9 @@ class PageNode:
         }
 
     def to_dict(self) -> Dict[str, Any]:
+        serialized_stats = dict(self.statistics)
+        if "blocks" in serialized_stats:
+            serialized_stats["blocks"] = [b.to_dict() if hasattr(b, 'to_dict') else b for b in serialized_stats["blocks"]]
         return {
             "id": self.id,
             "page_number": self.page_number,
@@ -198,7 +201,7 @@ class PageNode:
             "document_quality": self.document_quality,
             "ocr_recommended": self.ocr_recommended,
             "confidence_score": round(self.confidence_score, 2),
-            "statistics": self.statistics,
+            "statistics": serialized_stats,
             "sections": [s.to_dict() for s in self.sections],
             "tables": self.tables,
             "images": self.images,

@@ -291,27 +291,87 @@ class HierarchyBuilder:
         return headers + left_sorted + right_sorted + footers
 
     @staticmethod
-    def classify_headings_and_blocks(lines: List[Line], base_size: float, page_height: float) -> List[Block]:
+    def classify_headings_and_blocks(lines: List[Line], base_size: float, page_height: float, metadata: Dict[str, Any] = None) -> List[Block]:
         """Group adjacent lines into paragraphs or lists, detecting headings dynamically."""
         if not lines:
             return []
             
+        # Step 0: Merge standalone bullet lines with their corresponding text lines (Issue 2)
+        merged_lines = []
+        i = 0
+        while i < len(lines):
+            line = lines[i]
+            text = line.text.strip()
+            # If the line is just a bullet point symbol
+            is_lone_bullet = len(text) == 1 and text in ('•', '●', '▪', '○', '-', '*', '✓', '➤', '■', '◦', '–')
+            
+            if is_lone_bullet and i + 1 < len(lines):
+                next_line = lines[i + 1]
+                y_diff = abs(line.bbox[1] - next_line.bbox[1])
+                # If they are on the same baseline or vertically very close
+                if y_diff < 15.0:
+                    combined_words = line.words + next_line.words
+                    x0 = min(line.bbox[0], next_line.bbox[0])
+                    y0 = min(line.bbox[1], next_line.bbox[1])
+                    x1 = max(line.bbox[2], next_line.bbox[2])
+                    y1 = max(line.bbox[3], next_line.bbox[3])
+                    
+                    merged_line = Line(words=combined_words, bbox=(x0, y0, x1, y1))
+                    merged_lines.append(merged_line)
+                    i += 2
+                    continue
+            merged_lines.append(line)
+            i += 1
+        lines = merged_lines
+            
         blocks: List[Block] = []
         current_lines: List[Line] = []
         current_type = None
+        
+        last_heading_text = ""
+        
+        def is_contact_info_line(text: str) -> bool:
+            t = text.strip()
+            if not t:
+                return False
+            # Check for email and short length
+            if re.search(r'\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b', t):
+                if len(t) < 100:
+                    return True
+            # Matches contact prefixes followed by text
+            contact_prefixes = r'^(email|phone|mobile|linkedin|github|portfolio|website|address|contact)\b'
+            if re.match(contact_prefixes, t, re.IGNORECASE) and len(t) < 120:
+                return True
+            # Phone numbers check
+            phone_pattern = r'^\+?[\d\-\(\)\s]{7,20}$'
+            if re.match(phone_pattern, t.replace("Phone:", "").replace("Mobile:", "").strip()) and len(t) < 30:
+                return True
+            # Pure LinkedIn or GitHub URLs
+            if re.match(r'^(https?://)?(www\.)?(linkedin\.com|github\.com|twitter\.com)/[a-zA-Z0-9_\-\./]+$', t.lower()):
+                return True
+            # Embedded phone number check
+            if re.search(r'\b(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b', t) and len(t) < 60:
+                return True
+            return False
+        
+        contact_lines_meta = metadata.get("contact_lines", []) if metadata else []
         
         def commit_block():
             nonlocal current_lines, current_type
             if not current_lines:
                 return
             conf = 0.95
-            if current_type.startswith("heading"):
+            if current_type and current_type.startswith("heading"):
                 conf = 0.85
             elif current_type == "footnote":
                 conf = 0.90
             elif current_type == "caption":
                 conf = 0.90
-            blocks.append(Block(block_type=current_type, lines=current_lines, confidence=conf))
+            elif current_type == "contact_info":
+                conf = 0.98
+            elif current_type == "list_item":
+                conf = 0.95
+            blocks.append(Block(block_type=current_type or "paragraph", lines=current_lines, confidence=conf))
             current_lines = []
             current_type = None
 
@@ -350,8 +410,53 @@ class HierarchyBuilder:
                 commit_block()
                 continue
                 
-            # 3. Headings detection based on size, bold, spacing, and casing
-            if avg_size >= base_size + 1.2 or (is_bold and len(text) < 120 and not text.endswith('.')):
+            # 3. Contact Info Detection (BEFORE headings and bullets)
+            is_in_meta = any(text == cline or text in cline or cline in text for cline in contact_lines_meta)
+            
+            if is_contact_info_line(text) or is_in_meta:
+                commit_block()
+                current_lines.append(line)
+                current_type = "contact_info"
+                commit_block()
+                continue
+
+            # 4. List items detection (BEFORE headings check to avoid bullets becoming headings)
+            is_bullet = text.startswith(('•', '●', '-', '*', '✓', '➤', '○', '▪', '■', '◦', '–'))
+            is_numbered = bool(re.match(r'^\d+[\.\)]', text) or re.match(r'^[a-zA-Z][\.\)]', text))
+            
+            if is_bullet or is_numbered:
+                commit_block()
+                current_lines.append(line)
+                current_type = "list_item"
+                commit_block()
+                continue
+
+            # 5. Headings detection
+            text_upper_ratio = sum(1 for c in text if c.isupper()) / max(1, sum(1 for c in text if c.isalpha()))
+            is_all_caps = text.isupper() and len(text) > 4
+            
+            # Indentation/position: check if centered
+            page_width_est = 612.0
+            mid_est = page_width_est / 2.0
+            is_centered = abs((x0 + x1)/2.0 - mid_est) < 40.0
+            
+            is_heading_candidate = (
+                avg_size >= base_size + 1.2 or 
+                (is_bold and len(text) < 120 and not text.endswith('.')) or 
+                (is_all_caps and len(text) < 80) or
+                (is_centered and len(text) < 80)
+            )
+            
+            if is_heading_candidate:
+                # Check if it belongs to projects/experience sections and size is close to base size -> project list item (Issue 3)
+                is_list_section = any(k in last_heading_text.lower() for k in ["project", "experience", "skills", "hackathon"])
+                if is_list_section and avg_size < base_size + 2.0:
+                    commit_block()
+                    current_lines.append(line)
+                    current_type = "list_item"
+                    commit_block()
+                    continue
+                
                 commit_block()
                 current_lines.append(line)
                 if avg_size >= base_size + 5.0:
@@ -360,27 +465,11 @@ class HierarchyBuilder:
                     current_type = "heading_2"
                 else:
                     current_type = "heading_3"
+                last_heading_text = text
                 commit_block()
                 continue
                 
-            # 4. List items detection
-            is_bullet = text.startswith(('•', '▪', '-', '*'))
-            is_numbered = bool(re.match(r'^\d+[\.\)]', text) or re.match(r'^[a-zA-Z][\.\)]', text))
-            
-            if is_bullet:
-                commit_block()
-                current_lines.append(line)
-                current_type = "bullet_list_item"
-                commit_block()
-                continue
-            elif is_numbered:
-                commit_block()
-                current_lines.append(line)
-                current_type = "numbered_list_item"
-                commit_block()
-                continue
-                
-            # 5. General paragraph text grouping
+            # 6. General paragraph text grouping
             if current_type == "paragraph":
                 prev_line = current_lines[-1]
                 v_dist = line.bbox[1] - prev_line.bbox[3]
@@ -397,6 +486,53 @@ class HierarchyBuilder:
                 current_type = "paragraph"
                 
         commit_block()
+        
+        # Step 6: Merge adjacent Paragraph blocks (Issue 6)
+        merged_blocks = []
+        idx = 0
+        while idx < len(blocks):
+            curr_b = blocks[idx]
+            if curr_b.block_type == "paragraph" and idx + 1 < len(blocks):
+                next_b = blocks[idx + 1]
+                if next_b.block_type == "paragraph":
+                    # Extract font names and sizes for comparison
+                    def get_font_info(b: Block) -> Tuple[str, float, float]:
+                        sizes = []
+                        names = []
+                        x0 = b.bbox[0]
+                        for line in b.lines:
+                            for word in getattr(line, 'words', []):
+                                sizes.append(word.font_size)
+                                names.append(word.font_name)
+                        avg_sz = sum(sizes) / len(sizes) if sizes else base_size
+                        primary_nm = max(set(names), key=names.count) if names else "Unknown"
+                        return primary_nm, avg_sz, x0
+                        
+                    name1, size1, x1_coord = get_font_info(curr_b)
+                    name2, size2, x2_coord = get_font_info(next_b)
+                    
+                    same_font = name1 == name2 or name1.split("-")[0] == name2.split("-")[0]
+                    similar_size = abs(size1 - size2) <= 0.6
+                    same_indent = abs(x1_coord - x2_coord) <= 5.0
+                    gap = next_b.bbox[1] - curr_b.bbox[3]
+                    spacing_ok = gap < 15.0
+                    
+                    if same_font and similar_size and same_indent and spacing_ok:
+                        curr_b.lines.extend(next_b.lines)
+                        bx0 = min(curr_b.bbox[0], next_b.bbox[0])
+                        by0 = min(curr_b.bbox[1], next_b.bbox[1])
+                        bx1 = max(curr_b.bbox[2], next_b.bbox[2])
+                        by1 = max(curr_b.bbox[3], next_b.bbox[3])
+                        curr_b.bbox = (bx0, by0, bx1, by1)
+                        curr_b.text = "\n".join([l.text for l in curr_b.lines])
+                        curr_b.confidence = min(curr_b.confidence, next_b.confidence)
+                        blocks[idx] = curr_b
+                        del blocks[idx + 1]
+                        continue
+            merged_blocks.append(curr_b)
+            idx += 1
+        blocks = merged_blocks
+        
         return blocks
 
     @staticmethod
@@ -406,25 +542,33 @@ class HierarchyBuilder:
         w = x1 - x0
         h = y1 - y0
         area = w * h
+        aspect_ratio = w / h if h > 0 else 1.0
         
-        if w < 32 and h < 32:
+        # Priority: Icon -> Logo -> Photo -> Figure -> Diagram -> Chart (Issue 4)
+        # 1. Icon: very small image
+        if w < 40 and h < 40:
             return "icon", 0.95
             
-        if (y0 < page_height * 0.12 or y1 > page_height * 0.88) and w < 160 and h < 80:
-            return "logo", 0.85
+        # 2. Logo: small square-ish image or located in header/footer area of the page
+        if w < 160 and h < 160 and (0.75 <= aspect_ratio <= 1.35):
+            return "logo", 0.92
+        if (y0 < page_height * 0.25 or y1 > page_height * 0.88) and w < 600 and h < 80:
+            return "logo", 0.90
             
+        # 3. Photo: large raster image
+        if area > 40000 and not is_vector:
+            return "photo", 0.90
+            
+        # 4. Chart: chart heuristics (e.g. vector drawings with many lines/axes)
+        if is_vector and num_paths >= 15:
+            return "chart", 0.88
+            
+        # 5. Diagram: mostly vector graphics
         if is_vector or num_paths > 0:
-            if num_paths >= 10:
-                return "chart", 0.90
-            elif num_paths > 0:
-                return "diagram", 0.80
-            else:
-                return "illustration", 0.75
-                
-        if area > 45000:
-            return "photo", 0.92
-        else:
-            return "illustration", 0.70
+            return "diagram", 0.85
+            
+        # 6. Figure: fallback
+        return "figure", 0.75
 
     @staticmethod
     def associate_captions(blocks: List[Block], page_obj: PageObj):

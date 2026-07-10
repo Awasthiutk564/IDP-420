@@ -1,8 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <document filename="integral.pdf" type="Normal Document">
   <page number="1">
-    <block type="paragraph">
-      <text><![CDATA[(1+3x)x2 dx]]></text>
+    <image_statistics>
+      <tables>0</tables>
+      <logos>0</logos>
+      <figures>0</figures>
+      <charts>0</charts>
+      <icons>0</icons>
+      <photos>0</photos>
+      <diagrams>0</diagrams>
+    </image_statistics>
+    <block type="equation">
+      <text><![CDATA[(1+3x)x^2 dx]]></text>
+      <latex><![CDATA[(1+3x)x^{2}\,dx]]></latex>
     </block>
   </page>
 </document>
