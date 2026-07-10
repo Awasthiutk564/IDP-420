@@ -37,7 +37,7 @@ class StageLayout(Stage):
                 base_size = Counter(sizes).most_common(1)[0][0]
                 
             # Classify blocks using paragraph/heading builders
-            blocks = HierarchyBuilder.classify_headings_and_blocks(sorted_lines, base_size, page.height)
+            blocks = HierarchyBuilder.classify_headings_and_blocks(sorted_lines, base_size, page.height, doc_graph.metadata)
             
             # Map elements into BlockNodes
             block_nodes = []
@@ -58,13 +58,50 @@ class StageLayout(Stage):
                 )
                 block_nodes.append(block_node)
                 
-            # Connect BlockNodes inside double list graph (prev/next links)
+            # Connect BlockNodes inside double list graph (prev/next links) and build parent-child hierarchy
+            curr_h1 = None
+            curr_h2 = None
+            curr_h3 = None
+            curr_list_item = None
             for i, bn in enumerate(block_nodes):
                 if i > 0:
                     bn.prev_id = block_nodes[i - 1].id
                 if i < len(block_nodes) - 1:
                     bn.next_id = block_nodes[i + 1].id
-                    
+                
+                # Logical parent-child relationships
+                if bn.block_type == "heading_1":
+                    curr_h1 = bn
+                    curr_h2 = None
+                    curr_h3 = None
+                    curr_list_item = None
+                elif bn.block_type == "heading_2":
+                    curr_h2 = bn
+                    curr_h3 = None
+                    curr_list_item = None
+                    if curr_h1:
+                        bn.parent_id = curr_h1.id
+                elif bn.block_type == "heading_3":
+                    curr_h3 = bn
+                    curr_list_item = None
+                    if curr_h2:
+                        bn.parent_id = curr_h2.id
+                    elif curr_h1:
+                        bn.parent_id = curr_h1.id
+                elif bn.block_type == "list_item":
+                    curr_list_item = bn
+                    active_parent = curr_h3 or curr_h2 or curr_h1
+                    if active_parent:
+                        bn.parent_id = active_parent.id
+                else:
+                    # Paragraph directly following list_item inherits it as parent (Issue 3)
+                    if curr_list_item and bn.block_type == "paragraph":
+                        bn.parent_id = curr_list_item.id
+                    else:
+                        active_parent = curr_h3 or curr_h2 or curr_h1
+                        if active_parent:
+                            bn.parent_id = active_parent.id
+                        
             # 4. DocLayout-YOLO semantic verification overrides (if available)
             if layout_model:
                 # In a real environment, we'd pass the page image, here we simulate alignment checks

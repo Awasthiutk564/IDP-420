@@ -24,28 +24,19 @@ class StageSemantic(Stage):
             drawings_cnt = pm_page.get("drawings_count", 0)
             
             # 1. Classify Figures & Charts
+            from utils.hierarchy_builder import HierarchyBuilder
             for img in raw_images:
                 bbox = img["bbox"]
                 w = img["width"]
                 h = img["height"]
                 
-                # Classify figure sub-type
-                fig_type = "photo"
-                conf = 0.90
-                
-                if w < 50 and h < 50:
-                    fig_type = "icon"
-                elif w > 100 and h < 40:
-                    fig_type = "logo"
-                elif drawings_cnt > 20:
-                    fig_type = "diagram"
-                elif w > 300 and h > 200:
-                    fig_type = "chart" if "chart" in page.reading_complexity.lower() else "photo"
+                # Classify figure sub-type using the refined classifier
+                fig_type, conf = HierarchyBuilder.classify_figure_type(bbox, page.width, page.height, is_vector=False, num_paths=drawings_cnt)
                     
-                # Create visual blocks
+                # Create visual blocks with specific type
                 fig_block = BlockNode(
-                    block_type="figure",
-                    text=f"Figure: {fig_type.upper()}",
+                    block_type=fig_type,
+                    text="",
                     bbox=bbox,
                     confidence=conf,
                     provenance={
@@ -90,7 +81,7 @@ class StageSemantic(Stage):
                     
                     chart_block = BlockNode(
                         block_type="chart",
-                        text=f"Chart ({ch_type})",
+                        text="",
                         bbox=bbox,
                         confidence=0.85,
                         provenance={
@@ -118,7 +109,7 @@ class StageSemantic(Stage):
                         
             # 3. Caption Association (Euclidean box distance alignment check)
             captions = [b for b in blocks if "caption" in b.block_type.lower() or "heading_3" in b.block_type]
-            targets = [b for b in blocks if b.block_type in ["figure", "table", "chart"]]
+            targets = [b for b in blocks if b.block_type in ["figure", "table", "chart", "logo", "diagram", "photo", "icon"]]
             
             for cap in captions:
                 min_dist = float("inf")
@@ -156,6 +147,24 @@ class StageSemantic(Stage):
                         
             # Sort page blocks by spatial layout order
             page.statistics["blocks"] = sorted(blocks, key=lambda b: (b.bbox[1], b.bbox[0]))
+            
+            # Calculate rich statistics breakdown (Issue 5)
+            logo_cnt = sum(1 for img in page.images if img.get("figure_type") == "logo")
+            figure_cnt = sum(1 for img in page.images if img.get("figure_type") == "figure")
+            chart_cnt = sum(1 for img in page.images if img.get("figure_type") == "chart")
+            icon_cnt = sum(1 for img in page.images if img.get("figure_type") == "icon")
+            photo_cnt = sum(1 for img in page.images if img.get("figure_type") == "photo")
+            diagram_cnt = sum(1 for img in page.images if img.get("figure_type") == "diagram")
+            
+            page.statistics["image_counts"] = {
+                "logos": logo_cnt,
+                "figures": figure_cnt,
+                "charts": chart_cnt,
+                "icons": icon_cnt,
+                "photos": photo_cnt,
+                "diagrams": diagram_cnt
+            }
+            
             page.statistics["processing_time"] += (time.time() - start_time)
             
         return doc_graph
