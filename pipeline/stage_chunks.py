@@ -23,7 +23,7 @@ class StageChunks(Stage):
             for block in blocks:
                 if block.block_type.startswith("heading"):
                     current_heading = block.text
-                elif block.block_type in ["paragraph", "contact_info", "metadata", "project_item", "list_item"]:
+                elif block.block_type in ["paragraph", "contact_info", "metadata", "project_item", "list_item", "equation"]:
                     # Create semantic chunk
                     chunk_id = f"chunk_{len(chunks) + 1}"
                     chunk_data = {
@@ -35,6 +35,8 @@ class StageChunks(Stage):
                         "parent_id": getattr(block, 'parent_id', None),
                         "references": block.references,
                         "contains_equations": block.contains_equations,
+                        "latex": getattr(block, 'latex', ''),
+                        "mathml": getattr(block, 'mathml', ''),
                         # Simulated embedding vector (length 32 for testing)
                         "embedding": [round(0.01 * (i + len(block.text)), 4) for i in range(32)]
                     }
@@ -63,10 +65,13 @@ class StageChunks(Stage):
         for chunk in chunks:
             ent_id = f"ent_chunk_{chunk['id']}"
             chunk_to_ent_id[chunk['id']] = ent_id
+            lbl = chunk.get("latex") if chunk.get("latex") else chunk["text"]
+            lbl = lbl[:50] + ("..." if len(lbl) > 50 else "")
+            chunk_type = "Equation" if chunk.get("latex") else "Chunk"
             entity_nodes.append({
                 "id": ent_id,
-                "label": chunk["text"][:50] + ("..." if len(chunk["text"]) > 50 else ""),
-                "type": "Chunk"
+                "label": lbl,
+                "type": chunk_type
             })
             
         # Build relationships between entities appearing in the same chunks

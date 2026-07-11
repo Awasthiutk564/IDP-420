@@ -1,64 +1,52 @@
 {
-  "id": "doc_4bc7dbeb",
-  "filename": "integral.pdf",
-  "document_type": "Normal Document",
-  "metadata": {
-    "title": "(1+3x)x2 dx",
-    "author": "Kartikay Mishra",
-    "producer": "Microsoft® Word 2021",
-    "creation_date": "2026-07-07 23:56:45+05:30",
-    "is_encrypted": false,
-    "form_fields": {},
-    "contact_lines": []
-  },
-  "page_count": 1,
+  "id": "doc_d6b439a6",
+  "filename": "Screenshot 2026-07-10 223500.png",
+  "document_type": "Image OCR",
+  "metadata": {},
+  "page_count": 0,
   "pages": [
     {
-      "id": "page_57c90ca9",
+      "id": "page_4ea629e8",
       "page_number": 1,
-      "width": 595.2999877929688,
-      "height": 841.9000244140625,
-      "page_type": "Cover Page",
+      "width": 585.0,
+      "height": 144.0,
+      "page_type": "Normal Page",
       "reading_complexity": "Single column",
       "document_quality": "Digitally generated",
       "ocr_recommended": false,
-      "confidence_score": 0.8,
+      "confidence_score": 0.85,
       "statistics": {
-        "processing_time": 0.0017161369323730469,
+        "processing_time": 0.05100064277648926,
         "memory_usage": 0.0,
         "extractor": "PyMuPDF+PDFMiner Hybrid",
         "warnings": [],
         "errors": [],
         "fallbacks": [],
-        "temp_lines": [
-          "<utils.document_graph.LineNode object at 0x000001BD7B3B1290>"
-        ],
         "blocks": [
           {
-            "id": "block_c997fe01",
+            "id": "block_ce8c6630",
             "block_type": "equation",
-            "text": "(1+3x)x^2 dx",
+            "text": "\\int \\frac{x^{2}+x+1}{(x+2)(x^{2}+1)}\\,dx",
             "bbox": [
-              72.0,
-              73.5,
-              126.115999523,
-              86.5
+              23.0,
+              1.0,
+              539.0,
+              99.0
             ],
-            "confidence": 0.8,
+            "confidence": 0.85,
             "provenance": {
-              "library": "UnicodeMathParser",
+              "library": "PaddleOCR/MathReconstructor",
               "version": "1.0",
-              "confidence": 0.8,
+              "confidence": 0.85,
               "fallback": false,
-              "processing_time": 0.0017161369323730469,
               "fusion_matrix": {
                 "yolo": "equation",
                 "pdfminer": "equation",
                 "pymupdf": "equation",
                 "font_score": 1.0,
-                "agreement_score": 0.33,
+                "agreement_score": 0.5,
                 "bold_score": 1.0,
-                "size_heuristic_score": 0.6
+                "size_heuristic_score": 0.8
               }
             },
             "relationships": {
@@ -72,300 +60,105 @@
             },
             "lines": [
               {
-                "id": "line_9478a145",
-                "text": "(1+3x)x^2 dx",
+                "id": "line_a672375e",
+                "text": "x²+x+1",
                 "bbox": [
-                  72.0,
-                  73.5,
-                  126.115999523,
-                  86.5
+                  295.0,
+                  1.0,
+                  435.0,
+                  44.0
                 ],
-                "confidence": 0.99,
+                "confidence": 1.0,
                 "provenance": {
-                  "library": "pdfminer.six",
-                  "version": "20221105",
-                  "confidence": 0.99,
-                  "fallback": false
+                  "library": "PaddleOCR",
+                  "version": "PP-OCRv6",
+                  "confidence": 0.998072624206543
                 },
-                "words": [
-                  {
-                    "id": "word_262d1a40",
-                    "text": "(1+3x)x^2",
-                    "bbox": [
-                      72.0,
-                      73.5,
-                      111.87599999999999,
-                      86.5
-                    ],
-                    "font_name": "Calibri",
-                    "font_size": 12.0,
-                    "font_style": "Regular",
-                    "color": "#000000",
-                    "confidence": 0.99,
-                    "provenance": {
-                      "library": "pdfminer.six",
-                      "version": "20221105",
-                      "confidence": 0.99,
-                      "fallback": false
-                    },
-                    "characters": [
-                      {
-                        "id": "char_0a39aa61",
-                        "char": "(",
-                        "bbox": [
-                          72.0,
-                          74.5,
-                          75.636,
-                          86.5
-                        ],
-                        "font_name": "Calibri",
-                        "font_size": 12.0,
-                        "font_style": "Regular",
-                        "color": "#000000",
-                        "confidence": 0.99,
-                        "provenance": {
-                          "library": "pdfminer.six",
-                          "version": "20221105",
-                          "confidence": 0.99,
-                          "fallback": false
-                        }
-                      },
-                      {
-                        "id": "char_7031a0fd",
-                        "char": "1",
-                        "bbox": [
-                          75.636,
-                          74.5,
-                          81.72,
-                          86.5
-                        ],
-                        "font_name": "Calibri",
-                        "font_size": 12.0,
-                        "font_style": "Regular",
-                        "color": "#000000",
-                        "confidence": 0.99,
-                        "provenance": {
-                          "library": "pdfminer.six",
-                          "version": "20221105",
-                          "confidence": 0.99,
-                          "fallback": false
-                        }
-                      },
-                      {
-                        "id": "char_15cc1586",
-                        "char": "+",
-                        "bbox": [
-                          81.72,
-                          74.5,
-                          87.696,
-                          86.5
-                        ],
-                        "font_name": "Calibri",
-                        "font_size": 12.0,
-                        "font_style": "Regular",
-                        "color": "#000000",
-                        "confidence": 0.99,
-                        "provenance": {
-                          "library": "pdfminer.six",
-                          "version": "20221105",
-                          "confidence": 0.99,
-                          "fallback": false
-                        }
-                      },
-                      {
-                        "id": "char_a38d78f1",
-                        "char": "3",
-                        "bbox": [
-                          87.696,
-                          74.5,
-                          93.78,
-                          86.5
-                        ],
-                        "font_name": "Calibri",
-                        "font_size": 12.0,
-                        "font_style": "Regular",
-                        "color": "#000000",
-                        "confidence": 0.99,
-                        "provenance": {
-                          "library": "pdfminer.six",
-                          "version": "20221105",
-                          "confidence": 0.99,
-                          "fallback": false
-                        }
-                      },
-                      {
-                        "id": "char_878970f2",
-                        "char": "x",
-                        "bbox": [
-                          93.78,
-                          74.5,
-                          98.976,
-                          86.5
-                        ],
-                        "font_name": "Calibri",
-                        "font_size": 12.0,
-                        "font_style": "Regular",
-                        "color": "#000000",
-                        "confidence": 0.99,
-                        "provenance": {
-                          "library": "pdfminer.six",
-                          "version": "20221105",
-                          "confidence": 0.99,
-                          "fallback": false
-                        }
-                      },
-                      {
-                        "id": "char_600056e7",
-                        "char": ")",
-                        "bbox": [
-                          98.976,
-                          74.5,
-                          102.612,
-                          86.5
-                        ],
-                        "font_name": "Calibri",
-                        "font_size": 12.0,
-                        "font_style": "Regular",
-                        "color": "#000000",
-                        "confidence": 0.99,
-                        "provenance": {
-                          "library": "pdfminer.six",
-                          "version": "20221105",
-                          "confidence": 0.99,
-                          "fallback": false
-                        }
-                      },
-                      {
-                        "id": "char_e874d3e4",
-                        "char": "x",
-                        "bbox": [
-                          102.612,
-                          74.5,
-                          107.80799999999999,
-                          86.5
-                        ],
-                        "font_name": "Calibri",
-                        "font_size": 12.0,
-                        "font_style": "Regular",
-                        "color": "#000000",
-                        "confidence": 0.99,
-                        "provenance": {
-                          "library": "pdfminer.six",
-                          "version": "20221105",
-                          "confidence": 0.99,
-                          "fallback": false
-                        }
-                      },
-                      {
-                        "id": "char_ab4ddcc9",
-                        "char": "^2",
-                        "bbox": [
-                          107.82,
-                          73.5,
-                          111.87599999999999,
-                          81.5
-                        ],
-                        "font_name": "Calibri",
-                        "font_size": 8.0,
-                        "font_style": "Regular",
-                        "color": "#000000",
-                        "confidence": 0.99,
-                        "provenance": {
-                          "library": "pdfminer.six",
-                          "version": "20221105",
-                          "confidence": 0.99,
-                          "fallback": false
-                        }
-                      }
-                    ]
-                  },
-                  {
-                    "id": "word_a1b33e2c",
-                    "text": "dx",
-                    "bbox": [
-                      114.62,
-                      74.5,
-                      126.115999523,
-                      86.5
-                    ],
-                    "font_name": "Calibri",
-                    "font_size": 12.0,
-                    "font_style": "Regular",
-                    "color": "#000000",
-                    "confidence": 0.99,
-                    "provenance": {
-                      "library": "pdfminer.six",
-                      "version": "20221105",
-                      "confidence": 0.99,
-                      "fallback": false
-                    },
-                    "characters": [
-                      {
-                        "id": "char_20c29c77",
-                        "char": "d",
-                        "bbox": [
-                          114.62,
-                          74.5,
-                          120.92,
-                          86.5
-                        ],
-                        "font_name": "Calibri",
-                        "font_size": 12.0,
-                        "font_style": "Regular",
-                        "color": "#000000",
-                        "confidence": 0.99,
-                        "provenance": {
-                          "library": "pdfminer.six",
-                          "version": "20221105",
-                          "confidence": 0.99,
-                          "fallback": false
-                        }
-                      },
-                      {
-                        "id": "char_3425126e",
-                        "char": "x",
-                        "bbox": [
-                          120.919999523,
-                          74.5,
-                          126.115999523,
-                          86.5
-                        ],
-                        "font_name": "Calibri",
-                        "font_size": 12.0,
-                        "font_style": "Regular",
-                        "color": "#000000",
-                        "confidence": 0.99,
-                        "provenance": {
-                          "library": "pdfminer.six",
-                          "version": "20221105",
-                          "confidence": 0.99,
-                          "fallback": false
-                        }
-                      }
-                    ]
-                  }
-                ]
+                "words": []
+              },
+              {
+                "id": "line_81ea98bd",
+                "text": "Evaluate: ∫",
+                "bbox": [
+                  23.0,
+                  19.0,
+                  257.0,
+                  79.0
+                ],
+                "confidence": 0.97,
+                "provenance": {
+                  "library": "PaddleOCR",
+                  "version": "PP-OCRv6",
+                  "confidence": 0.967323899269104
+                },
+                "words": []
+              },
+              {
+                "id": "line_2d65ba06",
+                "text": "dx",
+                "bbox": [
+                  469.0,
+                  20.0,
+                  539.0,
+                  74.0
+                ],
+                "confidence": 1.0,
+                "provenance": {
+                  "library": "PaddleOCR",
+                  "version": "PP-OCRv6",
+                  "confidence": 0.9999825358390808
+                },
+                "words": []
+              },
+              {
+                "id": "line_801fd4b1",
+                "text": "(x+2)(x²+1)",
+                "bbox": [
+                  257.0,
+                  53.0,
+                  474.0,
+                  99.0
+                ],
+                "confidence": 1.0,
+                "provenance": {
+                  "library": "PaddleOCR",
+                  "version": "PP-OCRv6",
+                  "confidence": 0.9988734722137451
+                },
+                "words": []
               }
             ],
-            "latex": "(1+3x)x^{2}\\,dx",
-            "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><msup><mi>x</mi><mn>2</mn></msup></mrow></math>",
+            "latex": "\\int \\frac{x^{2}+x+1}{(x+2)(x^{2}+1)}\\,dx",
+            "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><mo>∫</mo><mfrac><mrow><mi>x²+x+1</mi></mrow><mrow><mi>(x+2)(x²+1)</mi></mrow></mfrac><mi>dx</mi></mrow></math>",
             "symbol_tree": {
-              "type": "superscript",
-              "base": {
-                "type": "identifier",
-                "value": "x"
-              },
-              "exponent": {
-                "type": "term",
-                "value": "2"
-              }
+              "type": "Integral",
+              "elements": [
+                {
+                  "type": "Fraction",
+                  "numerator": {
+                    "type": "Numerator",
+                    "value": "x²+x+1"
+                  },
+                  "denominator": {
+                    "type": "Denominator",
+                    "value": "(x+2)(x²+1)"
+                  },
+                  "bbox": [
+                    257.0,
+                    1.0,
+                    474.0,
+                    99.0
+                  ]
+                },
+                {
+                  "type": "Differential",
+                  "value": "dx"
+                }
+              ]
             }
           }
         ],
-        "headers_list": [
-          "(1+3x)x^2 dx"
-        ],
-        "footers_list": [],
+        "is_image_ocr": true,
         "image_counts": {
           "logos": 0,
           "figures": 0,
@@ -375,356 +168,74 @@
           "diagrams": 0
         }
       },
-      "sections": [
-        {
-          "id": "section_6b0efc4e",
-          "section_type": "header",
-          "bbox": [
-            0,
-            0,
-            595.2999877929688,
-            101.0280029296875
-          ],
-          "blocks": [
-            {
-              "id": "block_c997fe01",
-              "block_type": "equation",
-              "text": "(1+3x)x^2 dx",
-              "bbox": [
-                72.0,
-                73.5,
-                126.115999523,
-                86.5
-              ],
-              "confidence": 0.8,
-              "provenance": {
-                "library": "UnicodeMathParser",
-                "version": "1.0",
-                "confidence": 0.8,
-                "fallback": false,
-                "processing_time": 0.0017161369323730469,
-                "fusion_matrix": {
-                  "yolo": "equation",
-                  "pdfminer": "equation",
-                  "pymupdf": "equation",
-                  "font_score": 1.0,
-                  "agreement_score": 0.33,
-                  "bold_score": 1.0,
-                  "size_heuristic_score": 0.6
-                }
-              },
-              "relationships": {
-                "parent": null,
-                "next": null,
-                "prev": null,
-                "caption_of": null,
-                "references": [],
-                "footnotes": [],
-                "contains_equations": []
-              },
-              "lines": [
-                {
-                  "id": "line_9478a145",
-                  "text": "(1+3x)x^2 dx",
-                  "bbox": [
-                    72.0,
-                    73.5,
-                    126.115999523,
-                    86.5
-                  ],
-                  "confidence": 0.99,
-                  "provenance": {
-                    "library": "pdfminer.six",
-                    "version": "20221105",
-                    "confidence": 0.99,
-                    "fallback": false
-                  },
-                  "words": [
-                    {
-                      "id": "word_262d1a40",
-                      "text": "(1+3x)x^2",
-                      "bbox": [
-                        72.0,
-                        73.5,
-                        111.87599999999999,
-                        86.5
-                      ],
-                      "font_name": "Calibri",
-                      "font_size": 12.0,
-                      "font_style": "Regular",
-                      "color": "#000000",
-                      "confidence": 0.99,
-                      "provenance": {
-                        "library": "pdfminer.six",
-                        "version": "20221105",
-                        "confidence": 0.99,
-                        "fallback": false
-                      },
-                      "characters": [
-                        {
-                          "id": "char_0a39aa61",
-                          "char": "(",
-                          "bbox": [
-                            72.0,
-                            74.5,
-                            75.636,
-                            86.5
-                          ],
-                          "font_name": "Calibri",
-                          "font_size": 12.0,
-                          "font_style": "Regular",
-                          "color": "#000000",
-                          "confidence": 0.99,
-                          "provenance": {
-                            "library": "pdfminer.six",
-                            "version": "20221105",
-                            "confidence": 0.99,
-                            "fallback": false
-                          }
-                        },
-                        {
-                          "id": "char_7031a0fd",
-                          "char": "1",
-                          "bbox": [
-                            75.636,
-                            74.5,
-                            81.72,
-                            86.5
-                          ],
-                          "font_name": "Calibri",
-                          "font_size": 12.0,
-                          "font_style": "Regular",
-                          "color": "#000000",
-                          "confidence": 0.99,
-                          "provenance": {
-                            "library": "pdfminer.six",
-                            "version": "20221105",
-                            "confidence": 0.99,
-                            "fallback": false
-                          }
-                        },
-                        {
-                          "id": "char_15cc1586",
-                          "char": "+",
-                          "bbox": [
-                            81.72,
-                            74.5,
-                            87.696,
-                            86.5
-                          ],
-                          "font_name": "Calibri",
-                          "font_size": 12.0,
-                          "font_style": "Regular",
-                          "color": "#000000",
-                          "confidence": 0.99,
-                          "provenance": {
-                            "library": "pdfminer.six",
-                            "version": "20221105",
-                            "confidence": 0.99,
-                            "fallback": false
-                          }
-                        },
-                        {
-                          "id": "char_a38d78f1",
-                          "char": "3",
-                          "bbox": [
-                            87.696,
-                            74.5,
-                            93.78,
-                            86.5
-                          ],
-                          "font_name": "Calibri",
-                          "font_size": 12.0,
-                          "font_style": "Regular",
-                          "color": "#000000",
-                          "confidence": 0.99,
-                          "provenance": {
-                            "library": "pdfminer.six",
-                            "version": "20221105",
-                            "confidence": 0.99,
-                            "fallback": false
-                          }
-                        },
-                        {
-                          "id": "char_878970f2",
-                          "char": "x",
-                          "bbox": [
-                            93.78,
-                            74.5,
-                            98.976,
-                            86.5
-                          ],
-                          "font_name": "Calibri",
-                          "font_size": 12.0,
-                          "font_style": "Regular",
-                          "color": "#000000",
-                          "confidence": 0.99,
-                          "provenance": {
-                            "library": "pdfminer.six",
-                            "version": "20221105",
-                            "confidence": 0.99,
-                            "fallback": false
-                          }
-                        },
-                        {
-                          "id": "char_600056e7",
-                          "char": ")",
-                          "bbox": [
-                            98.976,
-                            74.5,
-                            102.612,
-                            86.5
-                          ],
-                          "font_name": "Calibri",
-                          "font_size": 12.0,
-                          "font_style": "Regular",
-                          "color": "#000000",
-                          "confidence": 0.99,
-                          "provenance": {
-                            "library": "pdfminer.six",
-                            "version": "20221105",
-                            "confidence": 0.99,
-                            "fallback": false
-                          }
-                        },
-                        {
-                          "id": "char_e874d3e4",
-                          "char": "x",
-                          "bbox": [
-                            102.612,
-                            74.5,
-                            107.80799999999999,
-                            86.5
-                          ],
-                          "font_name": "Calibri",
-                          "font_size": 12.0,
-                          "font_style": "Regular",
-                          "color": "#000000",
-                          "confidence": 0.99,
-                          "provenance": {
-                            "library": "pdfminer.six",
-                            "version": "20221105",
-                            "confidence": 0.99,
-                            "fallback": false
-                          }
-                        },
-                        {
-                          "id": "char_ab4ddcc9",
-                          "char": "^2",
-                          "bbox": [
-                            107.82,
-                            73.5,
-                            111.87599999999999,
-                            81.5
-                          ],
-                          "font_name": "Calibri",
-                          "font_size": 8.0,
-                          "font_style": "Regular",
-                          "color": "#000000",
-                          "confidence": 0.99,
-                          "provenance": {
-                            "library": "pdfminer.six",
-                            "version": "20221105",
-                            "confidence": 0.99,
-                            "fallback": false
-                          }
-                        }
-                      ]
-                    },
-                    {
-                      "id": "word_a1b33e2c",
-                      "text": "dx",
-                      "bbox": [
-                        114.62,
-                        74.5,
-                        126.115999523,
-                        86.5
-                      ],
-                      "font_name": "Calibri",
-                      "font_size": 12.0,
-                      "font_style": "Regular",
-                      "color": "#000000",
-                      "confidence": 0.99,
-                      "provenance": {
-                        "library": "pdfminer.six",
-                        "version": "20221105",
-                        "confidence": 0.99,
-                        "fallback": false
-                      },
-                      "characters": [
-                        {
-                          "id": "char_20c29c77",
-                          "char": "d",
-                          "bbox": [
-                            114.62,
-                            74.5,
-                            120.92,
-                            86.5
-                          ],
-                          "font_name": "Calibri",
-                          "font_size": 12.0,
-                          "font_style": "Regular",
-                          "color": "#000000",
-                          "confidence": 0.99,
-                          "provenance": {
-                            "library": "pdfminer.six",
-                            "version": "20221105",
-                            "confidence": 0.99,
-                            "fallback": false
-                          }
-                        },
-                        {
-                          "id": "char_3425126e",
-                          "char": "x",
-                          "bbox": [
-                            120.919999523,
-                            74.5,
-                            126.115999523,
-                            86.5
-                          ],
-                          "font_name": "Calibri",
-                          "font_size": 12.0,
-                          "font_style": "Regular",
-                          "color": "#000000",
-                          "confidence": 0.99,
-                          "provenance": {
-                            "library": "pdfminer.six",
-                            "version": "20221105",
-                            "confidence": 0.99,
-                            "fallback": false
-                          }
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ],
-              "latex": "(1+3x)x^{2}\\,dx",
-              "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><msup><mi>x</mi><mn>2</mn></msup></mrow></math>",
-              "symbol_tree": {
-                "type": "superscript",
-                "base": {
-                  "type": "identifier",
-                  "value": "x"
-                },
-                "exponent": {
-                  "type": "term",
-                  "value": "2"
-                }
-              }
-            }
-          ]
-        }
-      ],
+      "sections": [],
       "tables": [],
       "images": [],
       "charts": [],
       "hyperlinks": []
     }
   ],
-  "chunks": [],
+  "chunks": [
+    {
+      "id": "chunk_1",
+      "text": "\\int \\frac{x^{2}+x+1}{(x+2)(x^{2}+1)}\\,dx",
+      "page": 1,
+      "bbox": [
+        23.0,
+        1.0,
+        539.0,
+        99.0
+      ],
+      "heading": "Main Header",
+      "parent_id": null,
+      "references": [],
+      "contains_equations": [],
+      "latex": "\\int \\frac{x^{2}+x+1}{(x+2)(x^{2}+1)}\\,dx",
+      "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><mo>∫</mo><mfrac><mrow><mi>x²+x+1</mi></mrow><mrow><mi>(x+2)(x²+1)</mi></mrow></mfrac><mi>dx</mi></mrow></math>",
+      "embedding": [
+        0.41,
+        0.42,
+        0.43,
+        0.44,
+        0.45,
+        0.46,
+        0.47,
+        0.48,
+        0.49,
+        0.5,
+        0.51,
+        0.52,
+        0.53,
+        0.54,
+        0.55,
+        0.56,
+        0.57,
+        0.58,
+        0.59,
+        0.6,
+        0.61,
+        0.62,
+        0.63,
+        0.64,
+        0.65,
+        0.66,
+        0.67,
+        0.68,
+        0.69,
+        0.7,
+        0.71,
+        0.72
+      ]
+    }
+  ],
   "knowledge_graph": {
-    "entities": [],
+    "entities": [
+      {
+        "id": "ent_chunk_chunk_1",
+        "label": "\\int \\frac{x^{2}+x+1}{(x+2)(x^{2}+1)}\\,dx",
+        "type": "Equation"
+      }
+    ],
     "relationships": []
   }
 }

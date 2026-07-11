@@ -57,8 +57,78 @@ class StageText(Stage):
                 word_nodes = []
                 curr_word_chars = []
                 
+                UNICODE_SUPERSCRIPTS = {
+                    '⁰': '0', '¹': '1', '²': '2', '³': '3', '⁴': '4', '⁵': '5', '⁶': '6', '⁷': '7', '⁸': '8', '⁹': '9',
+                    '⁺': '+', '⁻': '-', '⁼': '=', '⁽': '(', '⁾': ')', 'ⁿ': 'n'
+                }
+                UNICODE_SUBSCRIPTS = {
+                    '₀': '0', '₁': '1', '₂': '2', '₃': '3', '₄': '4', '₅': '5', '₆': '6', '₇': '7', '₈': '8', '₉': '9',
+                    '₊': '+', '₋': '-', '₌': '=', '₍': '(', '₎': ')'
+                }
+
                 for char_idx, char_data in enumerate(char_list):
-                    norm_char = clean_text_ligatures(char_data["char"])
+                    is_superscript = False
+                    is_subscript = False
+                    
+                    raw_c = char_data["char"]
+                    unicode_super = UNICODE_SUPERSCRIPTS.get(raw_c)
+                    unicode_sub = UNICODE_SUBSCRIPTS.get(raw_c)
+                    
+                    if unicode_super:
+                        is_superscript = True
+                        norm_char = unicode_super
+                    elif unicode_sub:
+                        is_subscript = True
+                        norm_char = unicode_sub
+                    else:
+                        norm_char = clean_text_ligatures(raw_c)
+                        
+                    if char_idx > 0 and not is_superscript and not is_subscript:
+                        prev_char_data = char_list[char_idx - 1]
+                        prev_char_text = prev_char_data["char"]
+                        
+                        if prev_char_text.strip() and norm_char.strip() and prev_char_text not in [" ", "\n"] and norm_char not in [" ", "\n"]:
+                            curr_bbox = char_data["bbox"]
+                            prev_bbox = prev_char_data["bbox"]
+                            
+                            prev_origin_y = prev_bbox[3]
+                            curr_origin_y = curr_bbox[3]
+                            baseline_offset = prev_origin_y - curr_origin_y
+                            
+                            prev_font_size = prev_char_data["font_size"]
+                            curr_font_size = char_data["font_size"]
+                            
+                            if curr_font_size < prev_font_size:
+                                if baseline_offset > prev_font_size * 0.1:
+                                    is_superscript = True
+                                elif baseline_offset < -prev_font_size * 0.05:
+                                    is_subscript = True
+
+                    if is_superscript:
+                        super_node = CharacterNode(
+                            char="^",
+                            bbox=(char_data["bbox"][0] - 0.5, char_data["bbox"][1], char_data["bbox"][0], char_data["bbox"][3]),
+                            font_name=char_data["font_name"],
+                            font_size=char_data["font_size"],
+                            font_style=char_data["font_style"],
+                            color=char_data["color"],
+                            confidence=0.99,
+                            provenance={"library": "StageText/SuperscriptPreserver", "version": "1.0", "confidence": 0.99, "fallback": True}
+                        )
+                        curr_word_chars.append(super_node)
+                    elif is_subscript:
+                        sub_node = CharacterNode(
+                            char="_",
+                            bbox=(char_data["bbox"][0] - 0.5, char_data["bbox"][1], char_data["bbox"][0], char_data["bbox"][3]),
+                            font_name=char_data["font_name"],
+                            font_size=char_data["font_size"],
+                            font_style=char_data["font_style"],
+                            color=char_data["color"],
+                            confidence=0.99,
+                            provenance={"library": "StageText/SubscriptPreserver", "version": "1.0", "confidence": 0.99, "fallback": True}
+                        )
+                        curr_word_chars.append(sub_node)
+
                     char_node = CharacterNode(
                         char=norm_char,
                         bbox=char_data["bbox"],
