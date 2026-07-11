@@ -39,6 +39,8 @@ class StageFusion(Stage):
                 if fitz_pred in votes: votes[fitz_pred] += w_fitz
                 
                 winning_type = max(votes, key=votes.get)
+                if block.block_type == "equation" or fitz_pred == "equation":
+                    winning_type = "equation"
                 
                 # 2. Compute Font Consistency
                 font_sizes = []

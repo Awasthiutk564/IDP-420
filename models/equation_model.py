@@ -39,8 +39,16 @@ class EquationModel(BaseModel):
     def _clean_to_latex(self, text: str) -> str:
         # Convert simple math symbols to LaTeX equivalents
         cleaned = text.strip()
-        # Remove wrapper brackets if any
-        cleaned = re.sub(r'^[\$\[\(]|[\]\)\$]$', '', cleaned).strip()
+        # Remove wrapper brackets/symbols safely if they match pairs
+        if len(cleaned) >= 2:
+            if (cleaned.startswith('$') and cleaned.endswith('$')) or \
+               (cleaned.startswith('[') and cleaned.endswith(']')) or \
+               (cleaned.startswith('(') and cleaned.endswith(')')):
+                cleaned = cleaned[1:-1].strip()
+            elif cleaned.startswith('$$') and cleaned.endswith('$$'):
+                cleaned = cleaned[2:-2].strip()
+            elif cleaned.startswith('\\[') and cleaned.endswith('\\]'):
+                cleaned = cleaned[2:-2].strip()
         
         replacements = [
             (r'α', r'\\alpha'),
@@ -49,6 +57,7 @@ class EquationModel(BaseModel):
             (r'π', r'\\pi'),
             (r'Σ', r'\\sum'),
             (r'∫', r'\\int'),
+            (r'∬', r'\\iint'),
             (r'√', r'\\sqrt'),
             (r'±', r'\\pm'),
             (r'×', r'\\times'),
@@ -63,11 +72,26 @@ class EquationModel(BaseModel):
         for src, dest in replacements:
             cleaned = re.sub(src, dest, cleaned)
             
+        # Convert functions to LaTeX macros
+        cleaned = re.sub(r'\b(sin|cos|tan|log|ln|lim|sqrt)\b', r'\\\1', cleaned)
+        # Fix sqrt(x) to \sqrt{x}
+        cleaned = re.sub(r'\\sqrt\(([^)]+)\)', r'\\sqrt{\1}', cleaned)
+        # Fix d/dx to \frac{d}{dx}
+        cleaned = re.sub(r'\bd/d([xyt])\b', r'\\frac{d}{d\1}', cleaned)
+        
         # Convert superscripts like x² to x^2
         super_map = {'⁰':'0', '¹':'1', '²':'2', '³':'3', '⁴':'4', '⁵':'5', '⁶':'6', '⁷':'7', '⁸':'8', '⁹':'9'}
         for char, val in super_map.items():
             cleaned = cleaned.replace(char, f"^{val}")
             
+        # Wrap single-character exponent in curly braces if not already wrapped
+        cleaned = re.sub(r'\^([a-zA-Z0-9])(?![^{]*})', r'^{\1}', cleaned)
+        # Wrap single-character subscript in curly braces if not already wrapped
+        cleaned = re.sub(r'_([a-zA-Z0-9])(?![^{]*})', r'_{\1}', cleaned)
+        
+        # Add differential spacing for dx, dy, dt at the end or separated by space
+        cleaned = re.sub(r'\s+d([xyt])\b', r'\\,d\1', cleaned)
+        
         return cleaned
 
     def _build_symbol_tree(self, latex: str) -> Dict[str, Any]:
@@ -87,21 +111,48 @@ class EquationModel(BaseModel):
         return self._parse_expression(latex)
 
     def _parse_expression(self, expr: str) -> Dict[str, Any]:
-        # Handle exponent notation like x^2 or e^{i\pi}
-        match = re.search(r'([a-zA-Z0-9]+)\^(\{([^}]+)\}|([a-zA-Z0-9]+))', expr)
-        if match:
-            base = match.group(1)
-            exp = match.group(3) or match.group(4)
-            return {
-                "type": "superscript",
-                "base": {"type": "identifier", "value": base},
-                "exponent": self._parse_expression(exp)
-            }
+        parts = []
+        pos = 0
+        # Matches patterns like base^(exp) or base^exp and base_(sub) or base_sub
+        pattern = r'([a-zA-Z0-9]+|\\[a-zA-Z]+)(\^|_)((\{([^}]+)\})|([a-zA-Z0-9]+))'
+        
+        for m in re.finditer(pattern, expr):
+            start, end = m.span()
+            if start > pos:
+                val = expr[pos:start].strip()
+                if val:
+                    parts.append({"type": "term", "value": val})
             
-        # Handle multiplication or layout terms
+            base = m.group(1)
+            op = m.group(2)
+            val_group = m.group(5) or m.group(6)
+            
+            if op == '^':
+                parts.append({
+                    "type": "superscript",
+                    "base": {"type": "identifier", "value": base},
+                    "exponent": self._parse_expression(val_group)
+                })
+            else:
+                parts.append({
+                    "type": "subscript",
+                    "base": {"type": "identifier", "value": base},
+                    "subscript": self._parse_expression(val_group)
+                })
+            pos = end
+            
+        if pos < len(expr):
+            val = expr[pos:].strip()
+            if val:
+                parts.append({"type": "term", "value": val})
+            
+        if not parts:
+            return {"type": "term", "value": ""}
+        if len(parts) == 1:
+            return parts[0]
         return {
-            "type": "term",
-            "value": expr
+            "type": "sequence",
+            "elements": parts
         }
 
     def _generate_mathml(self, tree: Dict[str, Any]) -> str:
@@ -125,10 +176,41 @@ class EquationModel(BaseModel):
             mo = ET.SubElement(parent, "mo")
             mo.text = node["operator"]
             self._build_xml_elements(node["right"], parent)
+        elif t == "Integral":
+            mo = ET.SubElement(parent, "mo")
+            mo.text = "∫"
+            for child in node.get("elements", []):
+                self._build_xml_elements(child, parent)
+        elif t == "Fraction":
+            mfrac = ET.SubElement(parent, "mfrac")
+            num_row = ET.SubElement(mfrac, "mrow")
+            den_row = ET.SubElement(mfrac, "mrow")
+            self._build_xml_elements(node["numerator"], num_row)
+            self._build_xml_elements(node["denominator"], den_row)
+        elif t in ["Numerator", "Denominator", "Expression", "Differential"]:
+            val = str(node.get("value", ""))
+            # Split numbers, variables, and operators into MathML elements
+            for word in val.split():
+                if re.match(r'^[0-9]+$', word):
+                    mn = ET.SubElement(parent, "mn")
+                    mn.text = word
+                elif word in ["+", "-", "*", "/", "=", "<", ">"]:
+                    mo = ET.SubElement(parent, "mo")
+                    mo.text = word
+                else:
+                    mi = ET.SubElement(parent, "mi")
+                    mi.text = word
         elif t == "superscript":
-            msubsup = ET.SubElement(parent, "msup")
-            self._build_xml_elements(node["base"], msubsup)
-            self._build_xml_elements(node["exponent"], msubsup)
+            msup = ET.SubElement(parent, "msup")
+            self._build_xml_elements(node["base"], msup)
+            self._build_xml_elements(node["exponent"], msup)
+        elif t == "subscript":
+            msub = ET.SubElement(parent, "msub")
+            self._build_xml_elements(node["base"], msub)
+            self._build_xml_elements(node["subscript"], msub)
+        elif t == "sequence":
+            for child in node["elements"]:
+                self._build_xml_elements(child, parent)
         elif t == "identifier":
             mi = ET.SubElement(parent, "mi")
             mi.text = node["value"]

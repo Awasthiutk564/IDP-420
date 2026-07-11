@@ -1,5 +1,5 @@
-# Document: integral.pdf
-Type: Normal Document
+# Document: Screenshot 2026-07-10 223500.png
+Type: Image OCR
 
 ## Page 1
 ### Visual Statistics
@@ -12,6 +12,6 @@ Type: Normal Document
 - Diagrams: 0
 
 $$
-(1+3x)x^{2}\,dx
+\int \frac{x^{2}+x+1}{(x+2)(x^{2}+1)}\,dx
 $$
 

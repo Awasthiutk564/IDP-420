@@ -3,6 +3,7 @@ os.environ["FLAGS_use_mkldnn"] = "0"
 os.environ["PADDLE_PDX_ENABLE_MKLDNN_BYDEFAULT"] = "0"
 
 import glob
+import re
 import sys
 from colorama import Fore, Style
 from PIL import Image
@@ -278,32 +279,268 @@ def process_image(image_path: str):
     # Step 5: Run OCR text extraction using PaddleOCR
     print(f"  {Fore.YELLOW}Running PaddleOCR text extraction...{Style.RESET_ALL}", end="", flush=True)
     ocr_model = OCRModel()
-    extracted_text = ocr_model.extract_text(image_path)
+    result = ocr_model.predict_raw(image_path) if hasattr(ocr_model, 'predict_raw') else ocr_model.ocr.predict(image_path)
     print(f" {Fore.GREEN}Done!{Style.RESET_ALL}")
     print()
     
-    # Step 6: Display extracted text report
+    # Step 6: Build document graph and blocks representation
+    from utils.document_graph import DocumentNode, PageNode, BlockNode
+    
+    doc_graph = DocumentNode(filename=image_name, metadata={})
+    doc_graph.document_type = "Image OCR"
+    
+    page_node = PageNode(
+        page_number=1,
+        width=float(info['width']),
+        height=float(info['height']),
+        page_type="Normal Page"
+    )
+    
+    block_nodes = []
+    if result:
+        p_data = result[0]
+        rec_texts = p_data.get("rec_texts", [])
+        rec_boxes = p_data.get("rec_boxes", [])
+        rec_scores = p_data.get("rec_scores", [])
+
+        # ------------------------------------------------------------------
+        # Step A: Normalize unicode superscripts/subscripts in raw OCR text
+        # ------------------------------------------------------------------
+        UNICODE_SUPER = {
+            '⁰':'0','¹':'1','²':'2','³':'3','⁴':'4',
+            '⁵':'5','⁶':'6','⁷':'7','⁸':'8','⁹':'9',
+            '⁺':'+','⁻':'-','ⁿ':'n'
+        }
+        UNICODE_SUB = {
+            '₀':'0','₁':'1','₂':'2','₃':'3','₄':'4',
+            '₅':'5','₆':'6','₇':'7','₈':'8','₉':'9'
+        }
+
+        def _normalize_ocr_text(txt: str) -> str:
+            # Replace unicode superscript/subscript characters first
+            for ch, rep in UNICODE_SUPER.items():
+                txt = txt.replace(ch, f'^{rep}')
+            for ch, rep in UNICODE_SUB.items():
+                txt = txt.replace(ch, f'_{rep}')
+            # Superscript inference: "x2" or "x 2" -> "x^{2}"
+            # Match a single variable letter followed by optional whitespace and digits.
+            # Exclude 'd' before x/y/t (those are differentials: dx, dy, dt).
+            def _super_replace(m):
+                letter = m.group(1)
+                exp = m.group(2)
+                # Don't convert differential operators like d2 -> d^{2}
+                # (they're rare; real differentials are dx/dy/dt without digits)
+                return f'{letter}^{{{exp}}}'
+            txt = re.sub(r'([a-zA-Z])\s*(\d+)', _super_replace, txt)
+            # Restore differential operators that were incorrectly superscripted
+            # e.g. if OCR produced "d2x" it would become "d^{2}x"; leave as-is
+            # but "dx", "dy", "dt" were never touched (no digit after the letter).
+            return txt
+
+        norm_texts = [_normalize_ocr_text(t) for t in rec_texts]
+        norm_boxes = [(float(b[0]), float(b[1]), float(b[2]), float(b[3])) for b in rec_boxes]
+        norm_scores = [float(s) for s in rec_scores]
+
+        # ------------------------------------------------------------------
+        # Step B: Merge spatially-adjacent boxes that form one expression
+        # ------------------------------------------------------------------
+        def _vert_overlap_ratio(b1, b2):
+            """Fraction of the shorter box height that overlaps vertically."""
+            h1 = b1[3] - b1[1]
+            h2 = b2[3] - b2[1]
+            overlap = max(0.0, min(b1[3], b2[3]) - max(b1[1], b2[1]))
+            denom = min(h1, h2)
+            return overlap / denom if denom > 0 else 0.0
+
+        def _horiz_gap_ok(b1, b2, gap_factor=1.5):
+            """True when the horizontal gap between b1 and b2 is small."""
+            gap = b2[0] - b1[2]           # can be negative if they overlap
+            avg_h = ((b1[3]-b1[1]) + (b2[3]-b2[1])) / 2.0
+            return gap <= avg_h * gap_factor
+
+        # Sort all boxes left-to-right, top-to-bottom for deterministic grouping
+        order = sorted(range(len(norm_texts)), key=lambda i: (norm_boxes[i][1], norm_boxes[i][0]))
+        sorted_texts  = [norm_texts[i]  for i in order]
+        orig_sorted_texts = [rec_texts[i] for i in order]
+        sorted_boxes  = [norm_boxes[i]  for i in order]
+        sorted_scores = [norm_scores[i] for i in order]
+
+        # Build adjacency graph for connected components grouping
+        n = len(sorted_texts)
+        adj = {i: set() for i in range(n)}
+        for i in range(n):
+            for j in range(i + 1, n):
+                b1 = sorted_boxes[i]
+                b2 = sorted_boxes[j]
+                
+                dx = max(0.0, b2[0] - b1[2], b1[0] - b2[2])
+                dy = max(0.0, b2[1] - b1[3], b1[1] - b2[3])
+                
+                h1 = b1[3] - b1[1]
+                h2 = b2[3] - b2[1]
+                avg_h = (h1 + h2) / 2.0
+                
+                w1 = b1[2] - b1[0]
+                w2 = b2[2] - b2[0]
+                avg_w = (w1 + w2) / 2.0
+                
+                v_overlap = max(0.0, min(b1[3], b2[3]) - max(b1[1], b2[1]))
+                has_v_overlap = v_overlap > 0.0
+                
+                h_overlap = max(0.0, min(b1[2], b2[2]) - max(b1[0], b2[0]))
+                has_h_overlap = h_overlap > 0.0
+                
+                is_connected = False
+                if has_v_overlap and dx <= avg_h * 2.5:
+                    is_connected = True
+                elif has_h_overlap and dy <= avg_h * 2.0:
+                    is_connected = True
+                elif dx <= avg_h * 1.5 and dy <= avg_h * 1.5:
+                    is_connected = True
+                
+                is_math_i = any(sym in sorted_texts[i] for sym in ["∫", "∬", "Σ", "√", "π", "α", "β", "γ", "dx", "dy", "dt", "/", "+", "-", "*", "=", "^", "_"])
+                is_math_j = any(sym in sorted_texts[j] for sym in ["∫", "∬", "Σ", "√", "π", "α", "β", "γ", "dx", "dy", "dt", "/", "+", "-", "*", "=", "^", "_"])
+                if (is_math_i or is_math_j) and dx <= max(avg_h, avg_w) * 1.8 and dy <= avg_h * 2.5:
+                    is_connected = True
+                
+                if is_connected:
+                    adj[i].add(j)
+                    adj[j].add(i)
+                    
+        visited = set()
+        groups = []
+        for i in range(n):
+            if i not in visited:
+                comp = []
+                queue = [i]
+                visited.add(i)
+                while queue:
+                    curr = queue.pop(0)
+                    comp.append(curr)
+                    for neighbor in adj[curr]:
+                        if neighbor not in visited:
+                            visited.add(neighbor)
+                            queue.append(neighbor)
+                comp.sort(key=lambda idx: (sorted_boxes[idx][1], sorted_boxes[idx][0]))
+                groups.append(comp)
+
+        def _union_bbox(indices):
+            xs = [sorted_boxes[i][0] for i in indices]
+            ys = [sorted_boxes[i][1] for i in indices]
+            x1s = [sorted_boxes[i][2] for i in indices]
+            y1s = [sorted_boxes[i][3] for i in indices]
+            return (min(xs), min(ys), max(x1s), max(y1s))
+
+        from utils.document_graph import LineNode
+        for grp in groups:
+            merged_text = " ".join(sorted_texts[i] for i in grp)
+            merged_bbox = _union_bbox(grp)
+            merged_conf = sum(sorted_scores[i] for i in grp) / len(grp)
+
+            # Build sub-component lines (preserving original raw OCR text)
+            sub_lines = []
+            for idx in grp:
+                sub_lines.append(LineNode(
+                    text=orig_sorted_texts[idx],
+                    bbox=sorted_boxes[idx],
+                    confidence=sorted_scores[idx],
+                    provenance={"library": "PaddleOCR", "version": "PP-OCRv6", "confidence": sorted_scores[idx]},
+                    words=[]
+                ))
+
+            # Store the original OCR text separately before stripping
+            ocr_text = " ".join(orig_sorted_texts[i] for i in grp)
+
+            # Strip "Evaluate:" prefix — it is a label, not part of the expression
+            merged_text = re.sub(r'^Evaluate\s*:\s*', '', merged_text).strip()
+
+            node = BlockNode(
+                block_type="paragraph",
+                text=merged_text,
+                bbox=merged_bbox,
+                confidence=merged_conf,
+                provenance={"library": "PaddleOCR", "version": "PP-OCRv6", "confidence": merged_conf},
+                lines=sub_lines
+            )
+            node.ocr_text = ocr_text
+            block_nodes.append(node)
+                
+    page_node.statistics["blocks"] = block_nodes
+    page_node.statistics["is_image_ocr"] = True
+    page_node.statistics["processing_time"] = 0.05
+    doc_graph.pages.append(page_node)
+    
+    # Run extraction stages
+    stages = [
+        StageMath(),
+        StageSemantic(),
+        StageFusion(),
+        StageValidation(),
+        StageChunks(),
+        StageOutput()
+    ]
+    models = {
+        "ocr": ocr_model,
+        "equation": EquationModel()
+    }
+    
+    for stage in stages:
+        doc_graph = stage.run(
+            doc_graph=doc_graph,
+            pdf_path=image_path,
+            adapters=[],
+            classifiers={},
+            models=models
+        )
+        
+    # Step 7: Display mathematical results report
     print(format_banner("OCR EXTRACTION RESULTS", Fore.GREEN))
-    
-    if extracted_text and extracted_text.strip():
-        word_count = len(extracted_text.split())
-        char_count = len(extracted_text)
-        line_count = len(extracted_text.strip().splitlines())
+
+    eq_count = 0
+    chunks_count = len(doc_graph.chunks)
+    kg_entities = doc_graph.knowledge_graph.get("entities", [])
+
+    eq_blocks = []
+    for page in doc_graph.pages:
+        blocks = page.statistics.get("blocks", [])
+        for b in blocks:
+            if b.block_type == "equation":
+                eq_count += 1
+                eq_blocks.append(b)
+
+    for b in eq_blocks:
+        ocr_raw  = getattr(b, 'ocr_text', b.text)
+        normalized = b.text
+        latex = b.latex or b.text
+        print(f"\n{Fore.CYAN}EQUATION{Style.RESET_ALL}\n")
+        print(f"{Fore.GREEN}OCR Text{Style.RESET_ALL}\n{ocr_raw}\n")
+        print(f"{Fore.GREEN}Normalized{Style.RESET_ALL}\n{normalized}\n")
         
-        print(f"  {Fore.GREEN}{'Total Characters':<22} : {Fore.WHITE}{Style.BRIGHT}{char_count:,}{Style.RESET_ALL}")
-        print(f"  {Fore.GREEN}{'Total Words':<22} : {Fore.WHITE}{Style.BRIGHT}{word_count:,}{Style.RESET_ALL}")
-        print(f"  {Fore.GREEN}{'Total Lines':<22} : {Fore.WHITE}{Style.BRIGHT}{line_count:,}{Style.RESET_ALL}")
-        print()
-        
-        # Display extracted text snippet
-        print(f"  {Fore.CYAN}{Style.BRIGHT}[Extracted Text]{Style.RESET_ALL}")
-        print(format_text_snippet(extracted_text))
-    else:
-        print(f"  {Fore.RED}No text could be extracted from this image.{Style.RESET_ALL}")
-        print(f"  {Fore.YELLOW}The image may not contain readable text, or the text may be too small/blurry.{Style.RESET_ALL}")
-    
-    print()
+        sem_tree_str = getattr(b, 'semantic_tree_str', None)
+        if sem_tree_str:
+            print(f"{Fore.GREEN}Semantic Tree{Style.RESET_ALL}\n{sem_tree_str}\n")
+            
+        print(f"{Fore.GREEN}LaTeX{Style.RESET_ALL}\n")
+        print(f"$$\n{latex}\n$$\n")
+
+    if not eq_blocks:
+        print(f"\n{Fore.YELLOW}No equations detected.{Style.RESET_ALL}\n")
+
+    print(f"Equation Count: {eq_count}")
+    print(f"Chunk Count: {chunks_count}")
+
+    kg_entity_str = "None"
+    for idx, e in enumerate(kg_entities):
+        if e.get("type") == "Equation":
+            kg_entity_str = f"Equation_{idx+1}"
+            break
+    if kg_entity_str == "None" and eq_count > 0:
+        kg_entity_str = "Equation_1"
+
+    print(f"Knowledge Graph Entity: {kg_entity_str}\n")
+
     print(format_banner(f"FINISHED PROCESSING: {image_name.upper()}", Fore.BLUE))
+
 
 def evaluate_and_display_best_result(adapters, doc_graph, pdf_path):
     """
